@@ -8,6 +8,7 @@ from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage  # type: ignore[import-untyped]
 
 from app.config import Settings
+from app.limits import MAX_UPLOAD_BYTES
 from app.private_io.types import ObjectRef, StorageError, StoredObject
 
 
@@ -56,7 +57,7 @@ class GCSObjectStorage:
     def put(self, ref: ObjectRef, data: bytes, media_type: str) -> StoredObject:
         if media_type not in {"application/pdf", "image/png", "image/jpeg", "text/plain"}:
             raise StorageError("unsupported_media_type")
-        if not 0 < len(data) <= 20 * 1024 * 1024:
+        if not 0 < len(data) <= MAX_UPLOAD_BYTES:
             raise StorageError("invalid_object_size")
         digest = hashlib.sha256(data).hexdigest()
         retention = datetime.now(UTC) + timedelta(days=self.settings.object_retention_days)

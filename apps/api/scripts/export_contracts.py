@@ -1,4 +1,4 @@
-"""Export future /v1 contracts without mounting placeholder API routes."""
+"""Export the domain catalog; implemented upload operations use multipart metadata."""
 
 import json
 
@@ -24,7 +24,13 @@ def main() -> None:
             {
                 "schema_version": 1,
                 "api_version": "v1",
-                "mounted": False,
+                "catalog_only": True,
+                "implemented": [
+                    "POST /v1/student/assessments/upload",
+                    "GET /v1/student/assessments/{id}/status",
+                    "POST /v1/admin/knowledge/upload",
+                    "GET /v1/admin/knowledge/{id}/status",
+                ],
                 "endpoints": endpoints,
                 **definitions,
             },

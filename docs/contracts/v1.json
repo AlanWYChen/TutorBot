@@ -785,6 +785,7 @@
       "enum": [
         "queued",
         "running",
+        "retry_wait",
         "needs_review",
         "succeeded",
         "failed",
@@ -935,6 +936,50 @@
         "license_metadata"
       ],
       "title": "KnowledgeUpload",
+      "type": "object"
+    },
+    "KnowledgeUploadStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "job_id": {
+          "format": "uuid",
+          "title": "Job Id",
+          "type": "string"
+        },
+        "page_count": {
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Page Count",
+          "type": "integer"
+        },
+        "processing_kind": {
+          "const": "storage_verification",
+          "default": "storage_verification",
+          "title": "Processing Kind",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/JobState"
+        }
+      },
+      "required": [
+        "document_id",
+        "job_id",
+        "status",
+        "page_count"
+      ],
+      "title": "KnowledgeUploadStatus",
       "type": "object"
     },
     "LearningState": {
@@ -1785,11 +1830,18 @@
     }
   },
   "api_version": "v1",
+  "catalog_only": true,
   "endpoints": {
     "GET /v1/admin/evaluations": {
       "request": null,
       "response": {
         "$ref": "#/$defs/EvaluationList"
+      }
+    },
+    "GET /v1/admin/knowledge/{id}/status": {
+      "request": null,
+      "response": {
+        "$ref": "#/$defs/KnowledgeUploadStatus"
       }
     },
     "GET /v1/student/assessments/{id}/questions": {
@@ -1921,6 +1973,11 @@
       }
     }
   },
-  "mounted": false,
+  "implemented": [
+    "POST /v1/student/assessments/upload",
+    "GET /v1/student/assessments/{id}/status",
+    "POST /v1/admin/knowledge/upload",
+    "GET /v1/admin/knowledge/{id}/status"
+  ],
   "schema_version": 1
 }

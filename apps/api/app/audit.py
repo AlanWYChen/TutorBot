@@ -16,6 +16,12 @@ Route = Literal[
     "/v1/student/accounts/{account_id}",
     "/v1/admin/access",
     "/v1/admin/audit",
+    "/v1/student/assessments/upload",
+    "/v1/student/assessments/{resource_id}/file",
+    "/v1/student/assessments/{resource_id}/status",
+    "/v1/admin/knowledge/upload",
+    "/v1/admin/knowledge/{resource_id}/file",
+    "/v1/admin/knowledge/{resource_id}/status",
     "unmatched",
 ]
 ROUTES = {
@@ -24,6 +30,12 @@ ROUTES = {
     "/v1/student/accounts/{account_id}",
     "/v1/admin/access",
     "/v1/admin/audit",
+    "/v1/student/assessments/upload",
+    "/v1/student/assessments/{resource_id}/file",
+    "/v1/student/assessments/{resource_id}/status",
+    "/v1/admin/knowledge/upload",
+    "/v1/admin/knowledge/{resource_id}/file",
+    "/v1/admin/knowledge/{resource_id}/status",
 }
 
 

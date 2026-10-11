@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.limits import MAX_UPLOAD_BYTES
+
 Bucket = Literal["student-private", "curriculum-published", "teaching-private"]
 JobState = Literal["queued", "running", "retry_wait", "succeeded", "failed", "cancelled"]
 
@@ -26,7 +28,7 @@ class StoredObject(BaseModel):
     ref: ObjectRef
     sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     media_type: Literal["application/pdf", "image/png", "image/jpeg", "text/plain"]
-    size_bytes: int = Field(gt=0, le=20 * 1024 * 1024)
+    size_bytes: int = Field(gt=0, le=MAX_UPLOAD_BYTES)
     generation: int = Field(gt=0)
     retention_until: datetime
 

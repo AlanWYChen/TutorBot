@@ -3,9 +3,9 @@
 An evidence-backed high-school mathematics tutor, built ticket by ticket from
 [TUTORBOT_IMPLEMENTATION_PLAYBOOK.md](TUTORBOT_IMPLEMENTATION_PLAYBOOK.md).
 
-Current slice: **P0-07, private storage and durable background jobs**. Sign-in, role checks,
+Current slice: **P0-05, authenticated PDF upload safeguards**. Sign-in, role checks,
 student-scoped account reads, service isolation and maintainer activity review are functional.
-PDF upload and tutoring follow in later tickets.
+Private PDF upload/download APIs are functional; the student viewer and tutoring follow in later tickets.
 
 ## Start locally
 
@@ -30,8 +30,8 @@ The gateway checks capabilities and records explicit fallback decisions.
 
 Database, object storage, Redis and LiteLLM are accessible only within the Docker
 network. Web/API/auth emulator ports bind to loopback. Emulator storage does not
-implement production IAM. **Use synthetic data only until the phase 0 security
-gate passes.** Domain upload/tutoring operations follow in later tickets.
+implement production IAM. **Use synthetic data in the emulator stack.** Real student deployment requires
+the documented cloud security gate. The upload/viewer UI and tutoring follow in later tickets.
 
 ## Verify
 
@@ -109,8 +109,8 @@ source documents, rubrics, skills, releases and evaluations are stored separatel
 Private records have forced row policies and composite ownership keys. Runtime
 reads published global views and cannot access maintainer evaluation partitions.
 
-All 18 planned `/v1` domain operations have Pydantic contracts; business handlers
-arrive in their respective tickets. Unknown learning context stays explicit and
+The typed catalog includes the original 18 planned `/v1` operations and maintainer
+upload status. Upload/status handlers are implemented; others arrive in their tickets. Unknown learning context stays explicit and
 no-evidence traits remain unknown. No curriculum/rubric/student facts are seeded.
 
 See [schema inventory](docs/schemas/domain-v1.md), [API contract catalog](docs/contracts/v1.json),
@@ -152,5 +152,18 @@ in staging. Emulator signed access explicitly refuses.
 
 See [operations and staging tests](docs/storage-jobs/operations.md),
 [storage/job decision](docs/adr/0006-private-storage-jobs.md), and
-[P0-07 review evidence](docs/reviews/P0-07.md). Upload safeguards arrive in P0-05 after this step is reviewed; parsing follows
-in its own ticket.
+[P0-07 review evidence](docs/reviews/P0-07.md). Upload safeguards are implemented in P0-05; parsing and the viewer follow
+in their own tickets.
+
+## PDF upload safeguards review
+
+The runtime API accepts student PDFs and the maintainer API accepts draft references.
+Both validate actual bytes, checksum, PDF structure and page count before storage.
+Requests are limited to 25 MiB and 200 pages, with bounded multipart parsing and
+native inspection. Originals download through authenticated owner-scoped routes;
+no public storage URL is returned. Identical retries reuse their resource and job.
+
+`make upload-integration` checks the real authenticated upload/private-download flow
+with generated fixtures. See [API usage and policy](docs/uploads/api.md) and
+[P0-05 review evidence](docs/reviews/P0-05.md). The upload UI, page rendering and
+PDF viewer remain P1-01 work, after this step is reviewed.

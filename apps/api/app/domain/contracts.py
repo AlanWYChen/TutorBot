@@ -5,12 +5,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.limits import MAX_DOCUMENT_PAGES, MAX_UPLOAD_BYTES
+
 Probability = Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)]
 ShortText = Annotated[str, Field(min_length=1, max_length=256)]
 Content = Annotated[str, Field(min_length=1, max_length=20000)]
 Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
-MAX_UPLOAD_BYTES = 25 * 1024 * 1024
-MAX_DOCUMENT_PAGES = 200
 
 
 class Contract(BaseModel):
@@ -37,6 +37,7 @@ class AssignmentType(StrEnum):
 class JobState(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
+    RETRY_WAIT = "retry_wait"
     NEEDS_REVIEW = "needs_review"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
@@ -177,6 +178,14 @@ class AssessmentStatus(Contract):
     verified_state: Literal["unverified", "needs_review", "verified"]
     page_count: Annotated[int, Field(ge=0, le=MAX_DOCUMENT_PAGES)]
     error_code: Literal["invalid_document", "page_limit", "processing_failed"] | None = None
+
+
+class KnowledgeUploadStatus(Contract):
+    document_id: UUID
+    job_id: UUID
+    status: JobState
+    page_count: Annotated[int, Field(ge=1, le=MAX_DOCUMENT_PAGES)]
+    processing_kind: Literal["storage_verification"] = "storage_verification"
 
 
 class BoundingBox(Contract):
@@ -384,6 +393,7 @@ ENDPOINT_CONTRACTS: dict[str, tuple[type[Contract] | None, type[Contract]]] = {
     "POST /v1/student/tutor/sessions": (CreateTutorSession, TutorSessionCreated),
     "POST /v1/student/tutor/sessions/{id}/messages": (TutorMessageRequest, TutorMessageResponse),
     "POST /v1/admin/knowledge/upload": (KnowledgeUpload, JobAccepted),
+    "GET /v1/admin/knowledge/{id}/status": (None, KnowledgeUploadStatus),
     "POST /v1/admin/knowledge/{id}/process": (ProcessKnowledge, JobAccepted),
     "POST /v1/admin/knowledge/{id}/publish-candidate": (PublishCandidate, JobAccepted),
     "POST /v1/admin/annotations": (AdminAnnotation, ResourceCreated),

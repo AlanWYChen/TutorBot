@@ -44,6 +44,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
         registered = request.url.path
         if registered.startswith("/v1/student/accounts/") and registered.count("/") == 4:
             registered = "/v1/student/accounts/{account_id}"
+        segments = registered.split("/")
+        if (len(segments) == 6 and segments[1] == "v1"
+                and tuple(segments[2:4]) in {("student", "assessments"), ("admin", "knowledge")}
+                and segments[5] in {"file", "status"}):
+            registered = "/".join([*segments[:4], "{resource_id}", segments[5]])
         route = cast(Route, registered if registered in ROUTES else "unmatched")
         code = response.status_code
         event = SafeEvent(

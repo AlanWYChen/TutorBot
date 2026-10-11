@@ -7,6 +7,7 @@ from app.auth.routes import admin, router, student
 from app.config import Settings, require_service_credentials
 from app.health import readiness
 from app.model_gateway.registry import configured_models
+from app.uploads.routes import admin_uploads, student_uploads
 
 settings = Settings()
 require_service_credentials(settings)
@@ -32,3 +33,5 @@ def ready() -> JSONResponse:
 app.add_middleware(AuditMiddleware)
 app.include_router(router)
 app.include_router(admin if settings.service_mode == "admin" else student, prefix="/v1")
+
+app.include_router(admin_uploads if settings.service_mode == "admin" else student_uploads)

@@ -53,8 +53,8 @@ traits, curricula, rubrics, inferred personalities or fabricated student records
 
 ## API contract catalog
 
-[Contract source](../../apps/api/app/domain/contracts.py) defines all 18 section 5
-operations with Pydantic request/response models. [JSON Schema catalog](../contracts/v1.json)
+[Contract source](../../apps/api/app/domain/contracts.py) defines the 18 section 5 operations plus maintainer upload status
+(19 catalog entries) with Pydantic request/response models. [JSON Schema catalog](../contracts/v1.json)
 is exported without mounting placeholder routes. Regenerate with the API's
 `python -m scripts.export_contracts` command.
 
@@ -95,3 +95,11 @@ have forced RLS and composite owner/object keys; maintainer outboxes are not
 published. Separate worker roles can read manifests/jobs and update job status,
 with no access to other domain evidence. See the
 [storage/job decision](../adr/0006-private-storage-jobs.md).
+
+## P0-05 mounted upload operations
+
+Student/maintainer upload and storage-verification status are implemented, with
+separate authenticated original downloads. Other catalog operations remain planned;
+the exported catalog lists implemented operations without mounting placeholders.
+See [upload policy and multipart envelope](../uploads/api.md). No migration was
+needed: validated metadata is retained in existing document metadata columns.

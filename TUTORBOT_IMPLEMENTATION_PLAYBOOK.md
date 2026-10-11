@@ -421,7 +421,7 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 
 | Phase | Status | Evidence / PR / commit | Blockers |
 |---|---|---|---|
-| 0 Foundation | In progress — P0-01–P0-04 and P0-06 approved; P0-07 implemented, awaiting review | [P0-07 evidence](docs/reviews/P0-07.md) | P0-05 onward and phase security gate pending |
+| 0 Foundation | Awaiting review — P0-01–P0-04, P0-06 and P0-07 approved; P0-05 implemented | [P0-05 evidence](docs/reviews/P0-05.md) | Local security checks pass; cloud staging gates pending |
 | 1 Annotation studio | Not started | | |
 | 2 PDF + math analysis | Not started | | |
 | 3 Student/examiner intelligence | Not started | | |
@@ -437,8 +437,10 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 - **P0-03:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-03.md).
 - **P0-04:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-04.md).
 - **P0-06:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-06.md).
-- **P0-07:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P0-07.md).
-- **Next:** P0-05. Do not continue until the user reviews P0-07.
+- **P0-07:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-07.md).
+- **P0-05:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P0-05.md).
+- **Phase 0 local gate:** Auth, ownership, service/worker isolation, upload rejection and safe logging tests pass before agent tools are introduced. Emulator results do not establish cloud IAM.
+- **Next:** P1-01. Do not continue until the user reviews P0-05.
 
 ## 18. Acceptance scenarios to preserve across the entire build
 
