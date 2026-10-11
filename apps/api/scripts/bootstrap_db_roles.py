@@ -12,6 +12,8 @@ with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as connection:
         ("tutorbot_migrator", "MIGRATOR_DB_PASSWORD"),
         ("tutorbot_runtime", "RUNTIME_DB_PASSWORD"),
         ("tutorbot_admin", "ADMIN_DB_PASSWORD"),
+        ("tutorbot_runtime_worker", "RUNTIME_WORKER_DB_PASSWORD"),
+        ("tutorbot_admin_worker", "ADMIN_WORKER_DB_PASSWORD"),
     ]:
         if not connection.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (role,)).fetchone():
             connection.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
@@ -23,7 +25,9 @@ with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as connection:
         )
     connection.execute("REVOKE ALL ON DATABASE tutorbot FROM PUBLIC")
     connection.execute(
-        "GRANT CONNECT ON DATABASE tutorbot TO tutorbot_migrator, tutorbot_runtime, tutorbot_admin"
+        "GRANT CONNECT ON DATABASE tutorbot TO tutorbot_migrator, "
+        "tutorbot_runtime, tutorbot_admin, "
+        "tutorbot_runtime_worker, tutorbot_admin_worker"
     )
     connection.execute("REVOKE CREATE ON SCHEMA public FROM PUBLIC")
     connection.execute("GRANT USAGE, CREATE ON SCHEMA public TO tutorbot_migrator")

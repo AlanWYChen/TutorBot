@@ -86,3 +86,12 @@ until a verified embedding configuration is selected.
 
 Business upload, extraction, profile computation, vector retrieval and release
 publishing handlers are implemented by later tickets, using this schema.
+
+## P0-07 infrastructure extension
+
+Migration `0005_private_io` adds `storage_objects` and `jobs` to each of
+`student_data` and `global_knowledge` (51 tables total). Student manifests and jobs
+have forced RLS and composite owner/object keys; maintainer outboxes are not
+published. Separate worker roles can read manifests/jobs and update job status,
+with no access to other domain evidence. See the
+[storage/job decision](../adr/0006-private-storage-jobs.md).

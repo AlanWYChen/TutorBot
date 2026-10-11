@@ -421,7 +421,7 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 
 | Phase | Status | Evidence / PR / commit | Blockers |
 |---|---|---|---|
-| 0 Foundation | In progress — P0-01–P0-04 approved; P0-06 implemented, awaiting review | [P0-06 evidence](docs/reviews/P0-06.md) | P0-07 onward and phase security gate pending |
+| 0 Foundation | In progress — P0-01–P0-04 and P0-06 approved; P0-07 implemented, awaiting review | [P0-07 evidence](docs/reviews/P0-07.md) | P0-05 onward and phase security gate pending |
 | 1 Annotation studio | Not started | | |
 | 2 PDF + math analysis | Not started | | |
 | 3 Student/examiner intelligence | Not started | | |
@@ -436,8 +436,9 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 - **P0-02:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-02.md).
 - **P0-03:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-03.md).
 - **P0-04:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-04.md).
-- **P0-06:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P0-06.md).
-- **Next:** P0-07. Do not continue until the user reviews this step.
+- **P0-06:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-06.md).
+- **P0-07:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P0-07.md).
+- **Next:** P0-05. Do not continue until the user reviews P0-07.
 
 ## 18. Acceptance scenarios to preserve across the entire build
 

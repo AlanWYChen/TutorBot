@@ -80,6 +80,8 @@ services:
       MIGRATOR_DB_PASSWORD: ${MIGRATOR_DB_PASSWORD:-tutorbot-local-migrator}
       RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD:-tutorbot-local-runtime}
       ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:-tutorbot-local-admin}
+      RUNTIME_WORKER_DB_PASSWORD: ${RUNTIME_WORKER_DB_PASSWORD:-tutorbot-local-runtime-worker}
+      ADMIN_WORKER_DB_PASSWORD: ${ADMIN_WORKER_DB_PASSWORD:-tutorbot-local-admin-worker}
     command: [python, -m, scripts.bootstrap_db_roles]
     depends_on:
       db: {condition: service_healthy}
@@ -94,6 +96,18 @@ services:
     command: [alembic, upgrade, head]
     depends_on:
       db-bootstrap: {condition: service_completed_successfully}
+  storage-bootstrap:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [python, -m, scripts.bootstrap_storage]
+    depends_on:
+      storage: {condition: service_healthy}
   admin-api:
     build:
       context: ../..
@@ -102,6 +116,7 @@ services:
     environment:
       APP_ENV: local
       SERVICE_MODE: admin
+      STORAGE_EMULATOR_HOST: http://storage:4443
       LITELLM_BASE_URL: http://litellm:4000/v1
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-tutorbot-local-proxy}
       TUTOR_MODEL: ${TUTOR_MODEL:-openai/gpt-4o-mini-2024-07-18}
@@ -146,7 +161,7 @@ services:
     depends_on:
       migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
-      storage: {condition: service_healthy}
+      storage-bootstrap: {condition: service_completed_successfully}
       firebase: {condition: service_healthy}
       litellm: {condition: service_healthy}
     healthcheck:
@@ -164,10 +179,101 @@ services:
       APP_ENV: local
       DATABASE_URL: postgresql://tutorbot_runtime:${RUNTIME_DB_PASSWORD:-tutorbot-local-runtime}@db:5432/tutorbot
       BOOTSTRAP_DATABASE_URL: postgresql://tutorbot:${POSTGRES_PASSWORD:-tutorbot-local-db}@db:5432/tutorbot
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      RUNTIME_WORKER_DATABASE_URL: postgresql://tutorbot_runtime_worker:${RUNTIME_WORKER_DB_PASSWORD:-tutorbot-local-runtime-worker}@db:5432/tutorbot
+      ADMIN_WORKER_DATABASE_URL: postgresql://tutorbot_admin_worker:${ADMIN_WORKER_DB_PASSWORD:-tutorbot-local-admin-worker}@db:5432/tutorbot
       ADMIN_DATABASE_URL: postgresql://tutorbot_admin:${ADMIN_DB_PASSWORD:-tutorbot-local-admin}@db:5432/tutorbot
       FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
       GOOGLE_CLOUD_PROJECT: demo-tutorbot
     command: [pytest]
+  runtime-worker:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      SERVICE_MODE: runtime
+      DATABASE_URL: postgresql://tutorbot_runtime_worker:${RUNTIME_WORKER_DB_PASSWORD:-tutorbot-local-runtime-worker}@db:5432/tutorbot
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [celery, -A, app.private_io.celery_app, worker, --concurrency=1, --loglevel=WARNING]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-bootstrap: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import time; from pathlib import Path; assert time.time()-Path('/tmp/tutorbot-worker-heartbeat').stat().st_mtime<15"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  runtime-relay:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      SERVICE_MODE: runtime
+      DATABASE_URL: postgresql://tutorbot_runtime_worker:${RUNTIME_WORKER_DB_PASSWORD:-tutorbot-local-runtime-worker}@db:5432/tutorbot
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [python, -m, scripts.job_relay]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-bootstrap: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import time; from pathlib import Path; assert time.time()-Path('/tmp/tutorbot-relay-heartbeat').stat().st_mtime<15"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  admin-worker:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      SERVICE_MODE: admin
+      DATABASE_URL: postgresql://tutorbot_admin_worker:${ADMIN_WORKER_DB_PASSWORD:-tutorbot-local-admin-worker}@db:5432/tutorbot
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [celery, -A, app.private_io.celery_app, worker, --concurrency=1, --loglevel=WARNING]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-bootstrap: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import time; from pathlib import Path; assert time.time()-Path('/tmp/tutorbot-worker-heartbeat').stat().st_mtime<15"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  admin-relay:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      SERVICE_MODE: admin
+      DATABASE_URL: postgresql://tutorbot_admin_worker:${ADMIN_WORKER_DB_PASSWORD:-tutorbot-local-admin-worker}@db:5432/tutorbot
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [python, -m, scripts.job_relay]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-bootstrap: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import time; from pathlib import Path; assert time.time()-Path('/tmp/tutorbot-relay-heartbeat').stat().st_mtime<15"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
   web:
     build:
       context: ../..

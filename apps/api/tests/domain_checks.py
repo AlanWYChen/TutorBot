@@ -11,8 +11,8 @@ def verify_domain(scratch_url: str, engine: Engine, service_url: str) -> None:
     inspector = inspect(engine)
     private = inspector.get_table_names(schema="student_data")
     global_tables = inspector.get_table_names(schema="global_knowledge")
-    assert len(private) == 25
-    assert len(global_tables) == 19
+    assert len(private) == 27
+    assert len(global_tables) == 21
     for table in private:
         columns = {
             column["name"]: column for column in inspector.get_columns(table, schema="student_data")
@@ -70,7 +70,8 @@ def verify_domain(scratch_url: str, engine: Engine, service_url: str) -> None:
             (memory, b, profile_b),
         )
         policies = owner.execute(
-            "SELECT count(*) FROM pg_policies WHERE schemaname='student_data'"
+            "SELECT count(*) FROM pg_policies WHERE schemaname='student_data' "
+            "AND policyname!='worker_scope'"
         ).fetchone()
         assert policies == (len(private),)
         with pytest.raises(psycopg.errors.ForeignKeyViolation):

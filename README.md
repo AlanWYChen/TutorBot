@@ -3,7 +3,7 @@
 An evidence-backed high-school mathematics tutor, built ticket by ticket from
 [TUTORBOT_IMPLEMENTATION_PLAYBOOK.md](TUTORBOT_IMPLEMENTATION_PLAYBOOK.md).
 
-Current slice: **P0-06, model gateway and capability routing**. Sign-in, role checks,
+Current slice: **P0-07, private storage and durable background jobs**. Sign-in, role checks,
 student-scoped account reads, service isolation and maintainer activity review are functional.
 PDF upload and tutoring follow in later tickets.
 
@@ -22,7 +22,7 @@ Open http://localhost:3000. API docs: http://localhost:8000/docs.
 named volumes. Initial image downloads/builds may take several minutes.
 
 The stack includes Next.js/Tailwind, separate runtime/maintainer FastAPI services, PostgreSQL 17 + pgvector, Redis,
-fake GCS, Firebase Auth emulator (`demo-tutorbot`), and LiteLLM with all six task
+fake GCS, separate runtime/maintainer Celery workers and durable relays, Firebase Auth emulator (`demo-tutorbot`), and LiteLLM with all six task
 aliases. Provider credentials are server-only in `.env`; no live keys are needed
 for startup or smoke checks. Model inference still requires an external provider.
 The gateway checks capabilities and records explicit fallback decisions.
@@ -135,3 +135,22 @@ index model/dimension and return complete provenance metadata.
 responses and stops them afterward; it needs no paid API keys. Real quality and
 account availability are verified at the later staging gate. See
 [routing documentation](docs/model-routing.md) and [P0-06 review](docs/reviews/P0-06.md).
+
+## Private storage and jobs review
+
+The GCS SDK stores immutable objects in three separate buckets. PostgreSQL keeps
+hashes, media types, sizes, retention dates and generations in scoped manifests.
+The job dispatcher commits enqueue/status/cancel in the database; relays deliver
+through Celery/Redis and recover queued work after outages. Worker credentials
+are distinct and limited to their service's manifests and job states.
+
+`make private-io-integration` verifies synthetic storage and worker behavior, then
+restarts storage/API and interrupts Redis to prove objects and queued work persist.
+It restores local services when it exits. Cloud Tasks/Cloud Run Jobs have fixed
+job-reference request contracts; real IAM, V4 signing and cloud delivery are checked
+in staging. Emulator signed access explicitly refuses.
+
+See [operations and staging tests](docs/storage-jobs/operations.md),
+[storage/job decision](docs/adr/0006-private-storage-jobs.md), and
+[P0-07 review evidence](docs/reviews/P0-07.md). Upload safeguards arrive in P0-05 after this step is reviewed; parsing follows
+in its own ticket.

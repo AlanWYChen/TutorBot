@@ -11,7 +11,11 @@ class Settings(BaseSettings):
     )
     service_mode: Literal["runtime", "admin"] = "runtime"
     redis_url: str = "redis://redis:6379/0"
-    storage_emulator_host: str = "http://storage:4443"
+    storage_emulator_host: str | None = None
+    student_private_bucket: str = "student-private"
+    curriculum_published_bucket: str = "curriculum-published"
+    teaching_private_bucket: str = "teaching-private"
+    object_retention_days: int = 30
     app_env: Literal["local", "test", "production"] = "production"
     google_cloud_project: str = "demo-tutorbot"
     firebase_auth_emulator_host: str | None = None
@@ -23,6 +27,10 @@ class Settings(BaseSettings):
         if self.firebase_auth_emulator_host:
             if self.app_env == "production" or not self.google_cloud_project.startswith("demo-"):
                 raise ValueError("Auth emulator requires local/test mode and a demo project")
+        if self.storage_emulator_host and self.app_env == "production":
+            raise ValueError("Storage emulator requires local/test mode")
+        if not 1 <= self.object_retention_days <= 3650:
+            raise ValueError("Invalid object retention period")
         return self
 
 
