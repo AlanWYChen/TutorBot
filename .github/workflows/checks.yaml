@@ -1,0 +1,17 @@
+name: Foundation checks
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.12.0'
+          cache: npm
+      - run: make setup check
+      - run: make up smoke seed-auth auth-integration model-integration
+      - if: failure()
+        run: docker compose --env-file .env -f infra/compose/compose.yaml logs --tail 100
+      - if: always()
+        run: make down

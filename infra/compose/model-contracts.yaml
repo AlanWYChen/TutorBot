@@ -1,0 +1,42 @@
+# Isolated synthetic provider network. No provider internet access or paid calls.
+services:
+  model-fixture:
+    profiles: [model-checks]
+    build: {context: ../.., dockerfile: apps/api/Dockerfile, target: base}
+    environment: {APP_ENV: test}
+    command: [uvicorn, tests.provider_fixture:app, --host, 0.0.0.0, --port, '8000', --no-access-log]
+    networks: [model-contracts]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      retries: 20
+  model-openai:
+    profiles: [model-checks]
+    image: ghcr.io/berriai/litellm:main-v1.81.3-stable
+    entrypoint: [python, /tutorbot/render_config.py]
+    environment:
+      APP_ENV: test
+      MODEL_TEST_TRANSPORT: '1'
+      PYTHONPATH: /tutorbot
+      LITELLM_MASTER_KEY: sk-synthetic-contract-proxy
+      OPENAI_API_KEY: synthetic-openai-key
+      DEEPSEEK_API_KEY: synthetic-deepseek-key
+    volumes:
+      - ../litellm/render_config.py:/tutorbot/render_config.py:ro
+      - ../../apps/api/app/model_gateway:/tutorbot/app/model_gateway:ro
+    networks: [model-contracts]
+    depends_on: {model-fixture: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')"]
+      interval: 5s
+      retries: 40
+      start_period: 30s
+  model-deepseek:
+    extends: model-openai
+    environment:
+      TUTOR_MODEL: deepseek/deepseek-v4-pro
+  api-checks:
+    networks: [default, model-contracts]
+networks:
+  model-contracts:
+    internal: true

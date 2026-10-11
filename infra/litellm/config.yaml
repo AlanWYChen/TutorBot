@@ -1,0 +1,59 @@
+{
+  "model_list": [
+    {
+      "model_name": "tutor-reasoning",
+      "litellm_params": {
+        "model": "openai/gpt-4o-mini-2024-07-18",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    },
+    {
+      "model_name": "document-vision",
+      "litellm_params": {
+        "model": "openai/gpt-4o-2024-08-06",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    },
+    {
+      "model_name": "assessment-analysis",
+      "litellm_params": {
+        "model": "openai/gpt-4o-mini-2024-07-18",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    },
+    {
+      "model_name": "context-classification",
+      "litellm_params": {
+        "model": "openai/gpt-4o-mini-2024-07-18",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    },
+    {
+      "model_name": "teaching-distillation",
+      "litellm_params": {
+        "model": "openai/gpt-4o-mini-2024-07-18",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    },
+    {
+      "model_name": "embeddings",
+      "litellm_params": {
+        "model": "openai/text-embedding-3-small",
+        "api_key": "os.environ/OPENAI_API_KEY"
+      }
+    }
+  ],
+  "general_settings": {
+    "master_key": "os.environ/LITELLM_MASTER_KEY"
+  },
+  "litellm_settings": {
+    "set_verbose": false,
+    "drop_params": false,
+    "turn_off_message_logging": true,
+    "num_retries": 0
+  },
+  "router_settings": {
+    "num_retries": 0,
+    "disable_cooldowns": true
+  }
+}

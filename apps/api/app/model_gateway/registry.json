@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "models": {
+    "openai/gpt-4o-mini-2024-07-18": {
+      "provider": "openai",
+      "key_env": "OPENAI_API_KEY",
+      "vision": true,
+      "tool_calls": true,
+      "json_schema": true,
+      "json_object": true,
+      "context_limit": 128000,
+      "max_output_tokens": 16384,
+      "embedding_dimensions": null,
+      "streaming": true
+    },
+    "openai/gpt-4o-2024-08-06": {
+      "provider": "openai",
+      "key_env": "OPENAI_API_KEY",
+      "vision": true,
+      "tool_calls": true,
+      "json_schema": true,
+      "json_object": true,
+      "context_limit": 128000,
+      "max_output_tokens": 16384,
+      "embedding_dimensions": null,
+      "streaming": true
+    },
+    "openai/gpt-4o-mini": {
+      "provider": "openai",
+      "key_env": "OPENAI_API_KEY",
+      "vision": true,
+      "tool_calls": true,
+      "json_schema": true,
+      "json_object": true,
+      "context_limit": 128000,
+      "max_output_tokens": 16384,
+      "embedding_dimensions": null,
+      "streaming": true
+    },
+    "openai/gpt-4o": {
+      "provider": "openai",
+      "key_env": "OPENAI_API_KEY",
+      "vision": true,
+      "tool_calls": true,
+      "json_schema": true,
+      "json_object": true,
+      "context_limit": 128000,
+      "max_output_tokens": 16384,
+      "embedding_dimensions": null,
+      "streaming": true
+    },
+    "deepseek/deepseek-v4-pro": {
+      "provider": "deepseek",
+      "key_env": "DEEPSEEK_API_KEY",
+      "vision": false,
+      "tool_calls": true,
+      "json_schema": false,
+      "json_object": true,
+      "context_limit": 1000000,
+      "max_output_tokens": 8192,
+      "embedding_dimensions": null,
+      "streaming": true
+    },
+    "openai/text-embedding-3-small": {
+      "provider": "openai",
+      "key_env": "OPENAI_API_KEY",
+      "vision": false,
+      "tool_calls": false,
+      "json_schema": false,
+      "json_object": false,
+      "context_limit": 8191,
+      "max_output_tokens": 0,
+      "embedding_dimensions": 1536,
+      "streaming": false
+    }
+  },
+  "routes": {
+    "tutor-reasoning": {
+      "model_env": "TUTOR_MODEL",
+      "default_model": "openai/gpt-4o-mini-2024-07-18",
+      "services": [
+        "runtime",
+        "admin"
+      ],
+      "fallbacks": {
+        "vision": "document-vision",
+        "json_schema": "context-classification",
+        "tool_calls": "assessment-analysis"
+      }
+    },
+    "document-vision": {
+      "model_env": "VISION_MODEL",
+      "default_model": "openai/gpt-4o-2024-08-06",
+      "services": [
+        "runtime",
+        "admin"
+      ],
+      "fallbacks": {}
+    },
+    "assessment-analysis": {
+      "model_env": "ASSESSMENT_MODEL",
+      "default_model": "openai/gpt-4o-mini-2024-07-18",
+      "services": [
+        "runtime",
+        "admin"
+      ],
+      "fallbacks": {}
+    },
+    "context-classification": {
+      "model_env": "CONTEXT_MODEL",
+      "default_model": "openai/gpt-4o-mini-2024-07-18",
+      "services": [
+        "runtime",
+        "admin"
+      ],
+      "fallbacks": {}
+    },
+    "teaching-distillation": {
+      "model_env": "DISTILLATION_MODEL",
+      "default_model": "openai/gpt-4o-mini-2024-07-18",
+      "services": [
+        "admin"
+      ],
+      "fallbacks": {}
+    },
+    "embeddings": {
+      "model_env": "EMBEDDING_MODEL",
+      "default_model": "openai/text-embedding-3-small",
+      "services": [
+        "runtime",
+        "admin"
+      ],
+      "fallbacks": {}
+    }
+  }
+}

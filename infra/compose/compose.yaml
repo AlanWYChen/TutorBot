@@ -1,0 +1,194 @@
+name: tutorbot
+services:
+  db:
+    image: pgvector/pgvector:0.8.1-pg17
+    environment:
+      POSTGRES_DB: tutorbot
+      POSTGRES_USER: tutorbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tutorbot-local-db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/001-vector.sql:/docker-entrypoint-initdb.d/001-vector.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U tutorbot -d tutorbot']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4.2-alpine
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  storage:
+    image: fsouza/fake-gcs-server:1.52.3
+    command: [-scheme, http, -port, '4443', -public-host, 'storage:4443', -filesystem-root, /storage]
+    volumes: [storage-data:/storage]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://localhost:4443/storage/v1/b']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  firebase:
+    build:
+      context: ../..
+      dockerfile: infra/firebase/Dockerfile
+    ports: ['127.0.0.1:9099:9099']
+    volumes: [firebase-data:/data]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:9099/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+  litellm:
+    image: ghcr.io/berriai/litellm:main-v1.81.3-stable
+    entrypoint: [python, /tutorbot/render_config.py]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-tutorbot-local-proxy}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-not-configured}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-not-configured}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-not-configured}
+      APP_ENV: local
+      PYTHONPATH: /tutorbot
+      TUTOR_MODEL: ${TUTOR_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      ASSESSMENT_MODEL: ${ASSESSMENT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      CONTEXT_MODEL: ${CONTEXT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      DISTILLATION_MODEL: ${DISTILLATION_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      VISION_MODEL: ${VISION_MODEL:-openai/gpt-4o-2024-08-06}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-openai/text-embedding-3-small}
+    volumes:
+      - ../litellm/render_config.py:/tutorbot/render_config.py:ro
+      - ../../apps/api/app/model_gateway:/tutorbot/app/model_gateway:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  db-bootstrap:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql://tutorbot:${POSTGRES_PASSWORD:-tutorbot-local-db}@db:5432/tutorbot
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR_DB_PASSWORD:-tutorbot-local-migrator}
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD:-tutorbot-local-runtime}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:-tutorbot-local-admin}
+    command: [python, -m, scripts.bootstrap_db_roles]
+    depends_on:
+      db: {condition: service_healthy}
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql://tutorbot_migrator:${MIGRATOR_DB_PASSWORD:-tutorbot-local-migrator}@db:5432/tutorbot
+    command: [alembic, upgrade, head]
+    depends_on:
+      db-bootstrap: {condition: service_completed_successfully}
+  admin-api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      SERVICE_MODE: admin
+      LITELLM_BASE_URL: http://litellm:4000/v1
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-tutorbot-local-proxy}
+      TUTOR_MODEL: ${TUTOR_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      VISION_MODEL: ${VISION_MODEL:-openai/gpt-4o-2024-08-06}
+      ASSESSMENT_MODEL: ${ASSESSMENT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      CONTEXT_MODEL: ${CONTEXT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      DISTILLATION_MODEL: ${DISTILLATION_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-openai/text-embedding-3-small}
+      DATABASE_URL: postgresql://tutorbot_admin:${ADMIN_DB_PASSWORD:-tutorbot-local-admin}@db:5432/tutorbot
+      FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    ports: ['127.0.0.1:8001:8000']
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      firebase: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=20)"]
+      interval: 10s
+      timeout: 25s
+      retries: 10
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: base
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql://tutorbot_runtime:${RUNTIME_DB_PASSWORD:-tutorbot-local-runtime}@db:5432/tutorbot
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_EMULATOR_HOST: http://storage:4443
+      FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+      LITELLM_BASE_URL: http://litellm:4000/v1
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-tutorbot-local-proxy}
+      TUTOR_MODEL: ${TUTOR_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      VISION_MODEL: ${VISION_MODEL:-openai/gpt-4o-2024-08-06}
+      ASSESSMENT_MODEL: ${ASSESSMENT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      CONTEXT_MODEL: ${CONTEXT_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      DISTILLATION_MODEL: ${DISTILLATION_MODEL:-openai/gpt-4o-mini-2024-07-18}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-openai/text-embedding-3-small}
+    ports: ['127.0.0.1:8000:8000']
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      storage: {condition: service_healthy}
+      firebase: {condition: service_healthy}
+      litellm: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=20)"]
+      interval: 10s
+      timeout: 25s
+      retries: 10
+  api-checks:
+    profiles: [checks]
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: checks
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql://tutorbot_runtime:${RUNTIME_DB_PASSWORD:-tutorbot-local-runtime}@db:5432/tutorbot
+      BOOTSTRAP_DATABASE_URL: postgresql://tutorbot:${POSTGRES_PASSWORD:-tutorbot-local-db}@db:5432/tutorbot
+      ADMIN_DATABASE_URL: postgresql://tutorbot_admin:${ADMIN_DB_PASSWORD:-tutorbot-local-admin}@db:5432/tutorbot
+      FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
+      GOOGLE_CLOUD_PROJECT: demo-tutorbot
+    command: [pytest]
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      ADMIN_API_INTERNAL_URL: http://admin-api:8000
+      APP_ENV: local
+      FIREBASE_PROJECT_ID: demo-tutorbot
+      FIREBASE_WEB_API_KEY: demo-tutorbot-key
+    ports: ['127.0.0.1:3000:3000']
+    depends_on:
+      api: {condition: service_healthy}
+      admin-api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+volumes:
+  postgres-data:
+  redis-data:
+  storage-data:
+  firebase-data:
