@@ -76,7 +76,7 @@ class CloudTasksPublisher:
                             "audience": self.target.audience,
                         },
                     },
-                    "dispatchDeadline": "90s",
+                    "dispatchDeadline": "300s",
                 },
             },
         )
@@ -96,7 +96,7 @@ class CloudRunJobsPublisher:
             {
                 "overrides": {
                     "taskCount": 1,
-                    "timeout": "90s",
+                    "timeout": "300s",
                     "containerOverrides": [
                         {"env": [{"name": "TUTORBOT_JOB_ID", "value": str(job_id)}]}
                     ],

@@ -3,9 +3,18 @@
 An evidence-backed high-school mathematics tutor, built ticket by ticket from
 [TUTORBOT_IMPLEMENTATION_PLAYBOOK.md](TUTORBOT_IMPLEMENTATION_PLAYBOOK.md).
 
-Current slice: **P0-05, authenticated PDF upload safeguards**. Sign-in, role checks,
+Current slice: **P1-01, student upload and private page viewer**. Sign-in, role checks,
 student-scoped account reads, service isolation and maintainer activity review are functional.
-Private PDF upload/download APIs are functional; the student viewer and tutoring follow in later tickets.
+Students can upload and reopen PDFs, navigate their rendered pages and locate question areas. Saved annotations and tutoring follow in later tickets.
+
+The current implementation and Phase 1 workflow cover **tests/exams**. The planned
+**assignments/projects** section will link a separate requirements upload to a
+student proposal, draft or completed-work upload and review coverage, strengths,
+gaps and suggested changes. This needs an additive domain/API/review extension;
+it is not implemented by the current viewer or assignment classification scaffold.
+See [product scope and extension plan](TUTORBOT_IMPLEMENTATION_PLAYBOOK.md#product-sections-and-current-implementation-scope).
+Phase 1 remains focused on tests/exams; assignment foundations and review are now
+scheduled in Phases 2–3, with rubric resolution and coaching in Phases 4–5.
 
 ## Start locally
 
@@ -31,7 +40,7 @@ The gateway checks capabilities and records explicit fallback decisions.
 Database, object storage, Redis and LiteLLM are accessible only within the Docker
 network. Web/API/auth emulator ports bind to loopback. Emulator storage does not
 implement production IAM. **Use synthetic data in the emulator stack.** Real student deployment requires
-the documented cloud security gate. The upload/viewer UI and tutoring follow in later tickets.
+the documented cloud security gate. The student upload/viewer UI is available; tutoring follows in later tickets.
 
 ## Verify
 
@@ -165,5 +174,18 @@ no public storage URL is returned. Identical retries reuse their resource and jo
 
 `make upload-integration` checks the real authenticated upload/private-download flow
 with generated fixtures. See [API usage and policy](docs/uploads/api.md) and
-[P0-05 review evidence](docs/reviews/P0-05.md). The upload UI, page rendering and
-PDF viewer remain P1-01 work, after this step is reviewed.
+[P0-05 review evidence](docs/reviews/P0-05.md). P1-01 now supplies the upload UI, page rendering and private viewer; saved
+annotations are the next reviewed step.
+
+## Student page viewer review
+
+Sign in as the synthetic student, upload a PDF, then use page navigation, zoom,
+numbered prompt hints and drag/keyboard coordinates. The worker retains private
+canonical page images and coordinate metadata; numbered hints remain tentative.
+Selections are temporary until the annotation step. Scans display normally without
+invented hints. No model call or mathematical grading runs in this slice.
+
+`make viewer-integration` tests the complete web-proxy/API/worker flow. See
+[viewer operations](docs/assessments/viewer.md),
+[synthetic review fixture](docs/fixtures/synthetic-quadratics.pdf), and
+[P1-01 acceptance evidence](docs/reviews/P1-01.md).

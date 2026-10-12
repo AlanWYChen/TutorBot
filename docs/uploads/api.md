@@ -1,5 +1,11 @@
 # PDF upload safeguards
 
+Current product scope is **tests/exams**. The student handler stores one PDF and
+creates an assessment; broader `assessment_type` values do not implement separate
+assignment requirements and student-work uploads. The future assignments/projects
+workflow needs distinct document roles linked to an assignment and versioned,
+stage-aware reviews. See [extension plan](../../TUTORBOT_IMPLEMENTATION_PLAYBOOK.md#scheduled-assignmentsprojects-workflow-and-architecture-extension).
+
 ## Endpoints
 
 | Service | Upload | Status | Authenticated original |
@@ -14,7 +20,7 @@ JSON text part. No student ID, object path, service mode, publish status or job 
 is accepted from the client. Neither service mounts the other service's routes.
 
 Student metadata uses `AssessmentUpload`: filename, media_type, actual size_bytes,
-lowercase SHA-256, page_count, assessment_type and optional published curriculum_id.
+lowercase SHA-256, optional page_count, assessment_type and optional published curriculum_id.
 Maintainer metadata uses `KnowledgeUpload`, with title, author, publisher, kind,
 source_authority and nonempty license_metadata; source_url, curriculum_id and
 cohort_range are optional. A source URL is stored as provenance and never fetched.
@@ -68,7 +74,8 @@ The local emulator is reachable only inside the Compose network and cannot prove
 GCS IAM or signature security. API downloads do not rely on emulator access controls.
 Real bucket public-access prevention, service identities, signing, orphan cleanup
 and retention remain covered by the [staging gate](../storage-jobs/operations.md).
-No upload UI, rendering, OCR or tutoring tools are implemented by P0-05.
+P1-01 now supplies student upload UI, server-derived page count and private rendering;
+OCR and tutoring remain later work.
 
 ## Verification
 

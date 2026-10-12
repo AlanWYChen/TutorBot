@@ -56,7 +56,11 @@ def save_upload(
                 repo.object(document_id)
             except LookupError:
                 raise UploadRejected("upload_deleted", 409) from None
-            job = repo.enqueue(document_id, "upload/" + str(key))
+            job = (
+                repo.enqueue_render(document_id)
+                if principal.role == "student"
+                else repo.enqueue(document_id, "upload/" + str(key))
+            )
             return JobAccepted(job_id=job.id, resource_id=resource_id, status=JobState(job.state))
         # A tombstone without a domain document still reserves this resource forever.
         tombstone = session.execute(
@@ -156,7 +160,11 @@ def save_upload(
                     ),
                 },
             )
-        job = repo.enqueue(document_id, "upload/" + str(key))
+        job = (
+            repo.enqueue_render(document_id)
+            if principal.role == "student"
+            else repo.enqueue(document_id, "upload/" + str(key))
+        )
         return JobAccepted(job_id=job.id, resource_id=resource_id, status=JobState(job.state))
 
 
@@ -204,7 +212,7 @@ def upload_status(
             text(
                 f"SELECT id FROM {repo.schema}.jobs "
                 f"WHERE object_id=:id AND {repo.owner_column}=:owner "
-                "ORDER BY created_at LIMIT 1"
+                "ORDER BY (kind='render_document') DESC,created_at LIMIT 1"
             ),
             {"id": document, "owner": repo.owner},
         ).scalar_one()

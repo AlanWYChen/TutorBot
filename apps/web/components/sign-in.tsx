@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { AssessmentWorkspace } from "./assessment-workspace";
 import { tutorAuth } from "../lib/firebase";
 
 type Activity = { id: string; actor_role: string | null; target: string; outcome: string; created_at: string };
@@ -51,7 +52,7 @@ export function SignIn() {
   return <section className="mt-8 rounded-2xl border border-emerald-900/15 bg-white p-8" aria-labelledby="signin-title">
     <h2 id="signin-title" className="text-2xl font-semibold">{session ? "Your workspace" : "Sign in"}</h2>
     {session ? <><p role="status" className="mt-4">{session.role === "admin" ? "Maintainer access verified." : "Student access verified. Your account is private to you."}</p>
-      <p className="mt-3 text-sm text-slate-600">Assessment uploads and the teaching studio arrive in later reviewed steps.</p>
+      {session.role === "student" ? <AssessmentWorkspace /> : <p className="mt-3 text-sm text-slate-600">The teaching studio arrives in later reviewed steps.</p>}
       {session.role === "admin" && <button disabled={busy} onClick={loadActivity} className="mt-6 mr-4 rounded-lg border border-emerald-900 px-5 py-3 disabled:opacity-50">View recent activity</button>}
       {activity && <div className="mt-6 overflow-x-auto"><h3 className="font-semibold">Recent activity</h3><table className="mt-3 w-full text-left text-sm"><thead><tr><th className="py-2">Role</th><th>Action</th><th>Result</th></tr></thead><tbody>{activity.slice(0, 10).map(event => <tr key={event.id} className="border-t border-slate-200"><td className="py-2">{event.actor_role ?? "Signed out"}</td><td>{activityLabels[event.target] ?? "Unknown route"}</td><td>{event.outcome === "success" ? "Allowed" : event.outcome === "denied" ? "Denied" : "Failed"}</td></tr>)}</tbody></table></div>}
       <button disabled={busy} onClick={logout} className="mt-6 rounded-lg bg-emerald-900 px-5 py-3 text-white disabled:opacity-50">Sign out</button></>

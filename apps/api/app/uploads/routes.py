@@ -90,9 +90,10 @@ async def receive_upload(request: Request, principal: Principal, key: str | None
             except ValidationError:
                 raise UploadRejected("invalid_upload_metadata") from None
             data = await file.read(MAX_UPLOAD_BYTES + 1)
-            await run_in_threadpool(
+            pages = await run_in_threadpool(
                 validate_pdf, data, metadata, file.filename or "", file.content_type or ""
             )
+            metadata = metadata.model_copy(update={"page_count": pages})
             return await run_in_threadpool(save_upload, principal, metadata, data, idempotency)
     except UploadRejected as exc:
         raise HTTPException(exc.status, exc.code) from None

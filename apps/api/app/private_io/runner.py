@@ -64,7 +64,9 @@ def claim(engine: Engine, settings: Settings, job_id: UUID) -> dict[str, Any] | 
             conn.execute(
                 text(f"""
             UPDATE {schema}.jobs SET state='running',attempts=attempts+1,
-                lease_token=:token,lease_until=now()+interval '120 seconds'
+                lease_token=:token,lease_until=now()+
+                    CASE WHEN kind='render_document' THEN interval '360 seconds'
+                    ELSE interval '120 seconds' END
             WHERE id=:id AND state IN ('queued','retry_wait') AND available_at<=now()
                 AND attempts<3
             RETURNING *
@@ -80,7 +82,14 @@ def claim(engine: Engine, settings: Settings, job_id: UUID) -> dict[str, Any] | 
 def finish(engine: Engine, settings: Settings, job: dict[str, Any], error: str | None) -> None:
     state = "succeeded" if error is None else ("failed" if job["attempts"] >= 3 else "retry_wait")
     # Missing/deleted or integrity-conflicting source is permanent, not a retry storm.
-    if error in {"object_not_found", "object_integrity_failed", "object_version_changed"}:
+    if error in {
+        "object_not_found",
+        "object_integrity_failed",
+        "object_version_changed",
+        "render_limit_or_invalid_pdf",
+        "render_manifest_conflict",
+        "unsupported_job",
+    }:
         state = "failed"
     with engine.begin() as conn:
         conn.execute(
@@ -112,7 +121,11 @@ def run_job(engine: Engine, settings: Settings, job_id: UUID) -> None:
             raise StorageError("object_not_found")
         record = StoredObject.model_validate(record_json)
         # Handler is replay-safe: reads and verifies immutable source, no derived writes.
-        GCSObjectStorage(settings, record.ref.owner_id).get(record)
+        data = GCSObjectStorage(settings, record.ref.owner_id).get(record)
+        if job["kind"] == "render_document":
+            from app.assessments.rendering import render_document
+
+            render_document(engine, settings, job, record, data)
     except StorageError as exc:
         error = str(exc)
     except Exception:

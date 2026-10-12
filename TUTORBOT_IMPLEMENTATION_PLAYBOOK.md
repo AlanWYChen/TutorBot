@@ -417,12 +417,14 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 9. If something is uncertain, record it explicitly as `unknown`/`review_required`; do not guess at grading rationales or profile traits.
 10. Stop at each phase gate and deliver a concise acceptance-test report. Next agent picks up from the tracker below.
 
+11. At the end of each implemented step/phase, commit the completed changes with a short descriptive message and push to GitHub. Stop for user review before starting the next step.
+
 ## 17. Progress tracker (agents update this file as work completes)
 
 | Phase | Status | Evidence / PR / commit | Blockers |
 |---|---|---|---|
-| 0 Foundation | Awaiting review — P0-01–P0-04, P0-06 and P0-07 approved; P0-05 implemented | [P0-05 evidence](docs/reviews/P0-05.md) | Local security checks pass; cloud staging gates pending |
-| 1 Annotation studio | Not started | | |
+| 0 Foundation | Complete locally — all P0 tickets approved; local security gate passed | [P0-05 evidence](docs/reviews/P0-05.md) | Local security checks pass; cloud staging gates pending |
+| 1 Annotation studio | P1-01 implemented and approved | [P1-01 evidence](docs/reviews/P1-01.md) | P1-02 onward pending |
 | 2 PDF + math analysis | Not started | | |
 | 3 Student/examiner intelligence | Not started | | |
 | 4 Curriculum + RAG | Not started | | |
@@ -438,9 +440,10 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 - **P0-04:** Implemented, verified, and approved by the user. See [acceptance report](docs/reviews/P0-04.md).
 - **P0-06:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-06.md).
 - **P0-07:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-07.md).
-- **P0-05:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P0-05.md).
+- **P0-05:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-05.md).
 - **Phase 0 local gate:** Auth, ownership, service/worker isolation, upload rejection and safe logging tests pass before agent tools are introduced. Emulator results do not establish cloud IAM.
-- **Next:** P1-01. Do not continue until the user reviews P0-05.
+- **P1-01:** Implemented, verified and approved. See [acceptance report](docs/reviews/P1-01.md).
+- **Next:** P1-02, authorized after P1-01 approval.
 
 ## 18. Acceptance scenarios to preserve across the entire build
 

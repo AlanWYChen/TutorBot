@@ -54,13 +54,22 @@ class GCSObjectStorage:
         }[ref.bucket]
         return self.client.bucket(bucket_name).blob(ref.key)
 
-    def put(self, ref: ObjectRef, data: bytes, media_type: str) -> StoredObject:
+    def put(
+        self,
+        ref: ObjectRef,
+        data: bytes,
+        media_type: str,
+        *,
+        retention_until: datetime | None = None,
+    ) -> StoredObject:
         if media_type not in {"application/pdf", "image/png", "image/jpeg", "text/plain"}:
             raise StorageError("unsupported_media_type")
         if not 0 < len(data) <= MAX_UPLOAD_BYTES:
             raise StorageError("invalid_object_size")
         digest = hashlib.sha256(data).hexdigest()
-        retention = datetime.now(UTC) + timedelta(days=self.settings.object_retention_days)
+        retention = retention_until or (
+            datetime.now(UTC) + timedelta(days=self.settings.object_retention_days)
+        )
         blob = self._blob(ref, write=True)
         blob.metadata = {"sha256": digest, "retention_until": retention.isoformat()}
         try:

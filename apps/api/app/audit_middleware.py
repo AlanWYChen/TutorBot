@@ -49,6 +49,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 and tuple(segments[2:4]) in {("student", "assessments"), ("admin", "knowledge")}
                 and segments[5] in {"file", "status"}):
             registered = "/".join([*segments[:4], "{resource_id}", segments[5]])
+        if (len(segments) == 6 and segments[1:4] == ["v1", "student", "assessments"]
+                and segments[5] in {"render", "pages"}):
+            registered = "/".join([*segments[:4], "{assessment_id}", segments[5]])
+        if (len(segments) == 8 and segments[1:4] == ["v1", "student", "assessments"]
+                and segments[5] == "pages" and segments[7] == "image"):
+            registered = "/v1/student/assessments/{assessment_id}/pages/{page_number}/image"
         route = cast(Route, registered if registered in ROUTES else "unmatched")
         code = response.status_code
         event = SafeEvent(

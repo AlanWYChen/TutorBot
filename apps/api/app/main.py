@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from app.assessments.routes import router as assessment_viewer
 from app.audit import configure_logging
 from app.audit_middleware import AuditMiddleware
 from app.auth.routes import admin, router, student
@@ -35,3 +36,6 @@ app.include_router(router)
 app.include_router(admin if settings.service_mode == "admin" else student, prefix="/v1")
 
 app.include_router(admin_uploads if settings.service_mode == "admin" else student_uploads)
+
+if settings.service_mode == "runtime":
+    app.include_router(assessment_viewer)

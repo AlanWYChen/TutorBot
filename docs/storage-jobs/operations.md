@@ -17,9 +17,9 @@ run it against synthetic local development data only.
 
 Worker health requires a post-DB-connection readiness signal and recent Celery
 heartbeats. Relay health requires a recent successful outbox pass. The API's
-existing readiness report is unchanged. No upload, parsing or public job routes
-are exposed until their own implementation steps. The only registered job is
-`verify_object`, which validates the immutable source bytes against its manifest.
+existing readiness report is unchanged. Upload/status and private page-viewer routes
+are now supplied by P0-05/P1-01; analysis and tutoring routes remain later work. Jobs include `verify_object` and runtime-only `render_document`. Rendering publishes
+private page images and candidate coordinate hints, without interpretation.
 
 Call `PrivateRepository` inside a request transaction using a verified principal.
 Commit storage registration and `enqueue()` together. Call `tombstone()` and commit
@@ -29,8 +29,8 @@ failure requires a fresh idempotency key; reusing a key with another object refu
 Never let a request construct storage references, service mode, broker destination,
 cloud URL or command. Published references must be resolved from published DB views.
 
-The relay resends unclaimed jobs after ten seconds. Attempts have a 120-second lease
-and a 90-second Celery hard limit. Transient failures become available after two
+The relay resends unclaimed jobs after ten seconds. Verification has a 120-second lease and rendering a 360-second lease,
+with a 300-second Celery hard limit. Transient failures become available after two
 seconds, with at most three attempts. Object absence, changed generation and digest
 failures are permanent. Errors persist safe codes, not provider responses or content.
 Retries are at-least-once; all future processing handlers must be idempotent.
@@ -55,7 +55,7 @@ to enumerate worker jobs across students.
 For signed reads use signing-capable, preferably impersonated service-account
 credentials; plain compute ADC may not sign. Grant only the necessary signing
 permission to the service identity. Signing failures refuse access; no public URL
-fallback. Local preview must use a future authenticated API streaming route, since
+fallback. Local preview must use a authenticated API original/page route, since
 the emulator does not validate signatures.
 
 `CloudTasksPublisher` constructs a fixed HTTPS POST with a configured dedicated
@@ -109,3 +109,6 @@ Primary references: [GCS SDK Blob operations](https://docs.cloud.google.com/pyth
 [Celery task acknowledgement and retry behavior](https://docs.celeryq.dev/en/stable/userguide/tasks.html),
 [Cloud Tasks HTTP/OIDC requests](https://docs.cloud.google.com/tasks/docs/creating-http-target-tasks),
 and [Cloud Run Job execution](https://docs.cloud.google.com/run/docs/execute/jobs).
+
+P1-01 adds rendering; see [page viewer operations](../assessments/viewer.md) for
+canonical coordinates, worker grants, resource budgets and derived retention.

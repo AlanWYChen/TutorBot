@@ -134,7 +134,7 @@ class UploadMetadata(Contract):
     media_type: Literal["application/pdf", "image/png", "image/jpeg"]
     size_bytes: Annotated[int, Field(strict=True, gt=0, le=MAX_UPLOAD_BYTES)]
     sha256: Sha256
-    page_count: Annotated[int, Field(strict=True, ge=1, le=MAX_DOCUMENT_PAGES)]
+    page_count: Annotated[int, Field(strict=True, ge=1, le=MAX_DOCUMENT_PAGES)] | None = None
 
 
 class AssessmentUpload(UploadMetadata):
@@ -154,6 +154,7 @@ class CohortRange(Contract):
 
 
 class KnowledgeUpload(UploadMetadata):
+    page_count: Annotated[int, Field(strict=True, ge=1, le=MAX_DOCUMENT_PAGES)]
     title: ShortText
     author: ShortText
     publisher: ShortText

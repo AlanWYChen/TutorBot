@@ -66,6 +66,6 @@ def validate_pdf(data: bytes, metadata: UploadMetadata, filename: str, media_typ
         raise
     except Exception:
         raise UploadRejected("invalid_document") from None
-    if inspection.page_count != metadata.page_count:
+    if metadata.page_count is not None and inspection.page_count != metadata.page_count:
         raise UploadRejected("upload_metadata_mismatch")
     return inspection.page_count

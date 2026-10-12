@@ -174,10 +174,18 @@
           "type": "string"
         },
         "page_count": {
-          "maximum": 200,
-          "minimum": 1,
-          "title": "Page Count",
-          "type": "integer"
+          "anyOf": [
+            {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Count"
         },
         "schema_version": {
           "const": 1,
@@ -202,7 +210,6 @@
         "media_type",
         "size_bytes",
         "sha256",
-        "page_count",
         "assessment_type"
       ],
       "title": "AssessmentUpload",

@@ -51,6 +51,26 @@ revisions preserve history; state/summary projections can be recomputed. Trait
 levels include `not_observed` and `insufficient_evidence`. There are no seed
 traits, curricula, rubrics, inferred personalities or fabricated student records.
 
+## Assignment/project extension boundary
+
+The current Phase 1 workflow targets tests/exams. `assignments` provides task/stage
+context and one optional `document_id`; tutoring sessions can reference it. It does
+not yet model separately uploaded requirements and student work, submission
+versions, or requirement-coverage reviews. Student uploads currently create an
+`assessment`, even though the type catalog anticipates homework and IA contexts.
+
+A future assignments/projects section can reuse private documents, pages/regions,
+jobs and scoped access, but needs additive assignment-document roles, requirements
+and submission versions, and reviews pinned to both sources and stage. New private
+links must retain composite ownership keys and forced RLS. Existing question-based
+observations are not a general project-feedback store; extending profile evidence
+requires explicit provenance and aggregation decisions. Private teacher briefs
+remain student-scoped context, separate from published official rubric sources.
+See [scheduled workflow](../../TUTORBOT_IMPLEMENTATION_PLAYBOOK.md#scheduled-assignmentsprojects-workflow-and-architecture-extension).
+The playbook schedules the additive domain migration in P2-06, upload/workspace UI
+in P2-07, review in P3-06..P3-09, rubric resolution in P4-06 and coaching in P5-06.
+These remain planned; this documentation update does not apply migrations.
+
 ## API contract catalog
 
 [Contract source](../../apps/api/app/domain/contracts.py) defines the 18 section 5 operations plus maintainer upload status
@@ -103,3 +123,11 @@ separate authenticated original downloads. Other catalog operations remain plann
 the exported catalog lists implemented operations without mounting placeholders.
 See [upload policy and multipart envelope](../uploads/api.md). No migration was
 needed: validated metadata is retained in existing document metadata columns.
+
+## P1-01 page rendering
+
+Migration 0006 adds runtime render jobs and narrowly grants the runtime worker
+append-only page/candidate-region and derived-manifest writes. It preserves forced
+RLS and denies unrelated student profiles/conversations and maintainer data.
+Pages persist width/height, rotation and renderer version; bounding boxes use those
+canonical pixels. No mathematical observations or inferred profile states are created.

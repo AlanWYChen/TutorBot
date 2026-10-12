@@ -94,6 +94,14 @@ class PrivateRepository:
         return record
 
     def enqueue(self, object_id: UUID, idempotency_key: str) -> JobStatus:
+        return self._enqueue(object_id, idempotency_key, "verify_object")
+
+    def enqueue_render(self, object_id: UUID) -> JobStatus:
+        if self.schema != "student_data" or self.object(object_id).media_type != "application/pdf":
+            raise PermissionError("render_scope_denied")
+        return self._enqueue(object_id, "render/v1/" + str(object_id), "render_document")
+
+    def _enqueue(self, object_id: UUID, idempotency_key: str, kind: str) -> JobStatus:
         if not 1 <= len(idempotency_key) <= 128:
             raise ValueError("invalid_idempotency_key")
         # Lock prevents a concurrent tombstone from allowing a new job afterwards.
@@ -109,10 +117,16 @@ class PrivateRepository:
         self.session.execute(
             text(
                 f"INSERT INTO {self.schema}.jobs "
-                f"(id,{self.owner_column},object_id,idempotency_key) "
-                "VALUES (:id,:owner,:object,:key) ON CONFLICT DO NOTHING"
+                f"(id,{self.owner_column},object_id,idempotency_key,kind) "
+                "VALUES (:id,:owner,:object,:key,:kind) ON CONFLICT DO NOTHING"
             ),
-            {"id": job_id, "owner": self.owner, "object": object_id, "key": idempotency_key},
+            {
+                "id": job_id,
+                "owner": self.owner,
+                "object": object_id,
+                "key": idempotency_key,
+                "kind": kind,
+            },
         )
         row = (
             self.session.execute(
@@ -125,7 +139,7 @@ class PrivateRepository:
             .mappings()
             .one()
         )
-        if row["object_id"] != object_id:
+        if row["object_id"] != object_id or row["kind"] != kind:
             raise ValueError("idempotency_conflict")
         return self._status(dict(row))
 
