@@ -66,6 +66,18 @@ class AuditMiddleware(BaseHTTPMiddleware):
         ):
             registered = "/v1/student/assessments/{assessment_id}/pages/{page_number}/image"
         if segments[1:5] == ["v1", "admin", "studio", "sources"]:
+            if len(segments) == 6:
+                registered = "/v1/admin/studio/sources/{document_id}"
+            elif len(segments) == 7 and segments[6] == "restore":
+                registered = "/v1/admin/studio/sources/{document_id}/restore"
+            elif len(segments) == 8 and segments[6] == "pages":
+                registered = "/v1/admin/studio/sources/{document_id}/pages/{number}"
+            elif len(segments) == 9 and segments[6] == "pages" and segments[8] == "restore":
+                registered = "/v1/admin/studio/sources/{document_id}/pages/{number}/restore"
+            elif len(segments) == 9 and segments[6] == "annotations" and segments[8] == "restore":
+                registered = (
+                    "/v1/admin/studio/sources/{document_id}/annotations/{annotation_id}/restore"
+                )
             if len(segments) == 7 and segments[6] in {"render", "pages", "annotations"}:
                 registered = f"/v1/admin/studio/sources/{{document_id}}/{segments[6]}"
             elif len(segments) == 9 and segments[6] == "pages" and segments[8] == "image":
@@ -80,7 +92,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             if len(segments) == 7 and segments[6] in {"cases", "export", "import"}:
                 registered = f"/v1/admin/studio/datasets/{{dataset_id}}/{segments[6]}"
             elif (
-                len(segments) == 9 and segments[6] == "cases" and segments[8] in {"review", "crop"}
+                len(segments) == 9
+                and segments[6] == "cases"
+                and segments[8] in {"review", "crop", "annotation"}
             ):
                 registered = (
                     f"/v1/admin/studio/datasets/{{dataset_id}}/cases/{{case_id}}/{segments[8]}"

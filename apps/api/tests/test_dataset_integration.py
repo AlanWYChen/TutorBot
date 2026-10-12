@@ -119,12 +119,12 @@ def test_dataset_snapshots_import_review_splits_privacy_and_access():
         preview = web.get(dataset + "/export?partition=holdout&preview=true", headers=hdr)
         assert preview.status_code == 200, preview.text
         pinned = preview.text
-        # Subsequent edits do not change the frozen labels or their revision.
+        # Review and export follow saved edits while original snapshots remain in history.
         edit = {**labels, "expected_revision": 2, "rationale": "Later editable annotation"}
         assert web.patch(base + "/annotations/" + anno, headers=hdr, json=edit).status_code == 200
-        assert (
-            web.get(dataset + "/export?partition=holdout&preview=true", headers=hdr).text == pinned
-        )
+        latest = web.get(dataset + "/export?partition=holdout&preview=true", headers=hdr)
+        assert json.loads(latest.text)["labels"]["rationale"] == "Later editable annotation"
+        assert json.loads(latest.text)["annotation_revision"] == 3
         assert web.get(dataset + f"/cases/{cid}/crop", headers=hdr).content.startswith(b"\x89PNG")
         student = headers()
         for path in (
@@ -347,3 +347,154 @@ def test_question_registry_blocks_response_variants_across_distinct_sources():
     with pytest.raises(Conflict), Session(admin_engine) as session, session.begin():
         lock_split(session, variant)
     admin_engine.dispose()
+
+
+def test_live_label_review_and_reversible_page_annotation_document_deletion():
+    hdr = headers("maintainer@example.test")
+    data = numbered_pdf()
+    metadata = metadata_for(data)
+    metadata.pop("assessment_type")
+    metadata.pop("page_count")
+    metadata.update(
+        filename="personal.pdf",
+        title="Deletion fixture",
+        author="Unspecified",
+        publisher="Personal library",
+        kind="reference",
+        source_authority="supplemental",
+        license_metadata={
+            "rights": "Private personal-use upload; no publication permission asserted"
+        },
+    )
+    with httpx.Client(base_url="http://web:3000/api/studio", timeout=120) as web:
+        response = web.post(
+            "/upload",
+            headers=hdr,
+            files={
+                "file": ("personal.pdf", data, "application/pdf"),
+                "metadata": (None, json.dumps(metadata)),
+            },
+        )
+        assert response.status_code == 202, response.text
+        doc = response.json()["resource_id"]
+        base = "/sources/" + doc
+        assert web.post(base + "/render", headers=hdr).status_code == 202
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            pages = web.get(base + "/pages", headers=hdr).json()["pages"]
+            if pages:
+                break
+            time.sleep(0.3)
+        assert len(pages) == 2
+        response = web.post(
+            "/datasets",
+            headers=hdr,
+            json={
+                "name": "Delete fixture " + uuid4().hex,
+                "version": "v1",
+                "client_dataset_id": str(uuid4()),
+            },
+        )
+        assert response.status_code == 201, response.text
+        dataset = "/datasets/" + response.json()["id"]
+        notes, cases = [], []
+        for page in (1, 2):
+            response = web.post(
+                base + "/annotations",
+                headers=hdr,
+                json={
+                    "client_annotation_id": str(uuid4()),
+                    "page_number": page,
+                    "bbox": {"x": 10, "y": 20, "width": 100, "height": 50},
+                    "question": "Synthetic removal question " + uuid4().hex,
+                    "response": "Initial label",
+                },
+            )
+            assert response.status_code == 201, response.text
+            note = response.json()
+            notes.append(note)
+            response = web.post(
+                dataset + "/cases",
+                headers=hdr,
+                json={
+                    "document_id": doc,
+                    "annotation_id": note["id"],
+                    "expected_revision": 1,
+                    "partition": "development",
+                    "label_origin": "assistant_draft",
+                    "safety": {
+                        "origin": "synthetic",
+                        "rights_confirmed": True,
+                        "text_deidentified": True,
+                        "crop_reviewed": True,
+                    },
+                },
+            )
+            assert response.status_code == 201, response.text
+            cases.append(response.json())
+        cid = cases[0]["case_id"]
+        assert (
+            web.post(
+                dataset + f"/cases/{cid}/review", headers=hdr, json={"labels_reviewed": True}
+            ).status_code
+            == 204
+        )
+        labels = {k: notes[0][k] for k in AnnotationContent.model_fields}
+        response = web.patch(
+            base + "/annotations/" + notes[0]["id"],
+            headers=hdr,
+            json={
+                **labels,
+                "expected_revision": 1,
+                "response": "Updated saved response",
+                "first_error": "Updated comment",
+            },
+        )
+        assert response.status_code == 200, response.text
+        rows = web.get(dataset + "/cases", headers=hdr).json()["cases"]
+        updated = next(c for c in rows if c["case_id"] == cid)
+        assert updated["labels"]["response"] == "Updated saved response"
+        assert updated["labels"]["first_error"] == "Updated comment"
+        assert updated["label_state"] == "draft"
+        assert web.get(dataset + "/export?partition=development", headers=hdr).status_code == 409
+        assert web.get(dataset + f"/cases/{cid}/annotation", headers=hdr).json()["revision"] == 2
+        assert (
+            web.post(
+                dataset + f"/cases/{cid}/review", headers=hdr, json={"labels_reviewed": True}
+            ).status_code
+            == 204
+        )
+        approved = web.get(dataset + "/export?partition=development", headers=hdr)
+        assert json.loads(approved.text)["labels"]["response"] == "Updated saved response"
+        student = headers()
+        for path in (base, base + "/pages/2", base + "/annotations/" + notes[1]["id"]):
+            assert web.delete(path, headers=student).status_code == 403
+            assert web.delete(path).status_code == 401
+        assert web.delete(base + "/pages/2", headers=hdr).status_code == 204
+        assert [
+            p["page_number"] for p in web.get(base + "/pages", headers=hdr).json()["pages"]
+        ] == [1]
+        assert len(web.get(base + "/annotations", headers=hdr).json()["annotations"]) == 1
+        assert len(web.get(dataset + "/cases", headers=hdr).json()["cases"]) == 1
+        assert web.get(base + "/pages/2/image", headers=hdr).status_code == 404
+        assert (
+            web.get(dataset + f"/cases/{cases[1]['case_id']}/crop", headers=hdr).status_code == 404
+        )
+        assert web.post(base + "/pages/2/restore", headers=hdr).status_code == 204
+        assert len(web.get(dataset + "/cases", headers=hdr).json()["cases"]) == 2
+        path = base + "/annotations/" + notes[1]["id"]
+        assert web.delete(path, headers=hdr).status_code == 204
+        assert web.delete(path, headers=hdr).status_code == 204
+        assert len(web.get(dataset + "/cases", headers=hdr).json()["cases"]) == 1
+        assert web.get(path + "/crop", headers=hdr).status_code == 404
+        assert web.post(path + "/restore", headers=hdr).status_code == 204
+        assert len(web.get(dataset + "/cases", headers=hdr).json()["cases"]) == 2
+        assert web.delete(base, headers=hdr).status_code == 204
+        assert web.get(base + "/pages", headers=hdr).status_code == 404
+        assert web.get(dataset + "/cases", headers=hdr).json()["cases"] == []
+        assert web.get(dataset + "/export?partition=development", headers=hdr).status_code == 409
+        assert web.post(base + "/restore", headers=hdr).status_code == 204
+        assert len(web.get(dataset + "/cases", headers=hdr).json()["cases"]) == 2
+        assert web.get(path + "/crop", headers=hdr).status_code == 200
+        # Leave disposable fixture sources removed from the library.
+        assert web.delete(base, headers=hdr).status_code == 204

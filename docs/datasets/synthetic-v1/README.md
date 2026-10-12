@@ -23,7 +23,7 @@ Existing PDFs are preserved so source and crop hashes remain reproducible.
 Review each crop, mathematical answer, proposed mark, first visible error and
 intervention in **Annotation datasets**. The first-error labels concern the visible
 answer, because these short examples do not show earlier working. Correct labels
-through a revised source annotation and a new dataset version. Approve cases only
+directly in the studio or Review labels; saved changes appear in current review and exports. Approve cases only
 after review; draft previews cannot be used as verified ground truth.
 
 These intentionally similar templates are for MVP development and review. They do

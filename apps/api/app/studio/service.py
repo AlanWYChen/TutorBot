@@ -37,7 +37,11 @@ def recent(principal: Principal) -> list[AssessmentListItem]:
         repo = PrivateRepository(session, principal)
         rows = session.execute(
             text(
-                "SELECT d.id,d.retention_metadata,j.state FROM global_knowledge.documents d "
+                "SELECT d.id,d.retention_metadata,j.state, "
+                "(SELECT count(*) FROM global_knowledge.document_pages p WHERE p.document_id=d.id "
+                "AND p.deleted_at IS NULL) AS visible_pages, "
+                "EXISTS(SELECT 1 FROM global_knowledge.document_pages p WHERE p.document_id=d.id) "
+                "AS rendered FROM global_knowledge.documents d "
                 "JOIN global_knowledge.storage_objects o ON o.id=d.id AND o.owner_id=:owner "
                 "LEFT JOIN global_knowledge.jobs j ON j.object_id=d.id AND j.owner_id=:owner "
                 "AND j.kind='render_document' WHERE d.created_by_admin_uid=:uid "
@@ -49,7 +53,9 @@ def recent(principal: Principal) -> list[AssessmentListItem]:
             AssessmentListItem(
                 id=row["id"],
                 filename=row["retention_metadata"]["upload_metadata"]["filename"],
-                page_count=row["retention_metadata"]["upload_metadata"]["page_count"],
+                page_count=row["visible_pages"]
+                if row["rendered"]
+                else row["retention_metadata"]["upload_metadata"]["page_count"],
                 state=row["state"] or "not_prepared",
             )
             for row in rows
@@ -71,7 +77,7 @@ def page_row(repo: PrivateRepository, document: UUID, number: int) -> dict[str, 
             text(
                 "SELECT * FROM global_knowledge.document_pages "
                 "WHERE document_id=:id AND page_num=:page "
-                "AND dimensions->>'render_version'=:version"
+                "AND deleted_at IS NULL AND dimensions->>'render_version'=:version"
             ),
             {"id": document, "page": number, "version": RENDER_VERSION},
         )
@@ -90,7 +96,8 @@ def pages(principal: Principal, document: UUID) -> list[PageView]:
         rows = session.execute(
             text(
                 "SELECT * FROM global_knowledge.document_pages WHERE document_id=:id "
-                "AND dimensions->>'render_version'=:version ORDER BY page_num"
+                "AND deleted_at IS NULL AND "
+                "dimensions->>'render_version'=:version ORDER BY page_num"
             ),
             {"id": document, "version": RENDER_VERSION},
         ).mappings()
@@ -290,7 +297,8 @@ def get_in_session(
                 "FROM global_knowledge.maintainer_annotations a "
                 "JOIN global_knowledge.document_regions r ON r.id=a.region_id "
                 "JOIN global_knowledge.document_pages p ON p.id=r.page_id "
-                "WHERE a.id=:id AND a.created_by_admin_uid=:uid AND p.document_id=:document"
+                "WHERE a.id=:id AND a.created_by_admin_uid=:uid AND p.document_id=:document "
+                "AND a.deleted_at IS NULL AND p.deleted_at IS NULL"
             ),
             {"id": annotation, "uid": principal.uid, "document": document},
         )
@@ -323,7 +331,7 @@ def annotations(principal: Principal, document: UUID) -> list[AnnotationView]:
                     "JOIN global_knowledge.document_regions r ON r.id=a.region_id "
                     "JOIN global_knowledge.document_pages p ON p.id=r.page_id "
                     "WHERE p.document_id=:id AND a.created_by_admin_uid=:uid "
-                    "AND a.payload<>'{}'::jsonb "
+                    "AND a.deleted_at IS NULL AND p.deleted_at IS NULL AND a.payload<>'{}'::jsonb "
                     "ORDER BY p.page_num,a.created_at,a.id LIMIT 200"
                 ),
                 {"id": document, "uid": principal.uid},
@@ -339,8 +347,13 @@ def edit(
 ) -> AnnotationView:
     with Session(engine()) as session, session.begin():
         repo = PrivateRepository(session, principal)
+        session.execute(text("SELECT pg_advisory_xact_lock(730013)"))
         get_in_session(repo, principal, document, annotation)
         data = content(payload)
+        from app.datasets.service import validate_edit
+
+        validate_edit(session, annotation, payload)
+
         number = session.scalar(
             text(
                 "UPDATE global_knowledge.maintainer_annotations "
@@ -374,3 +387,78 @@ def crop(principal: Principal, document: UUID, annotation: UUID) -> bytes:
             {"id": annotation},
         )
         return storage_for(repo.owner).get(repo.object(crop_id))
+
+
+def remove(
+    principal: Principal,
+    document: UUID,
+    *,
+    page: int | None = None,
+    annotation: UUID | None = None,
+    restore: bool = False,
+) -> None:
+    with Session(engine()) as session, session.begin():
+        repo = PrivateRepository(session, principal)
+        locate(repo, document, principal)
+        session.execute(text("SELECT pg_advisory_xact_lock(730013)"))
+        if page is None and annotation is None:
+            if not restore:
+                repo.tombstone(document)
+                return
+            from app.private_io.types import StoredObject
+
+            raw = session.scalar(
+                text(
+                    "SELECT record FROM global_knowledge.storage_objects "
+                    "WHERE id=:id AND owner_id=:owner"
+                ),
+                {"id": document, "owner": repo.owner},
+            )
+            if raw is None:
+                raise LookupError("source not found")
+            storage_for(repo.owner).get(StoredObject.model_validate(raw))
+            session.execute(
+                text(
+                    "UPDATE global_knowledge.storage_objects SET deleted_at=NULL "
+                    "WHERE id=:id AND owner_id=:owner"
+                ),
+                {"id": document, "owner": repo.owner},
+            )
+            session.execute(
+                text(
+                    "UPDATE global_knowledge.jobs SET state='queued',attempts=0,"
+                    "available_at=now(),dispatched_at=NULL,lease_token=NULL,lease_until=NULL "
+                    "WHERE object_id=:id AND owner_id=:owner AND state='cancelled'"
+                ),
+                {"id": document, "owner": repo.owner},
+            )
+            return
+        source(repo, principal, document)
+        if annotation is not None:
+            row = session.scalar(
+                text(
+                    "SELECT a.id FROM global_knowledge.maintainer_annotations a "
+                    "JOIN global_knowledge.document_regions r ON r.id=a.region_id "
+                    "JOIN global_knowledge.document_pages p ON p.id=r.page_id "
+                    "WHERE a.id=:annotation AND a.created_by_admin_uid=:uid AND p.document_id=:doc "
+                    "AND p.deleted_at IS NULL"
+                ),
+                {"annotation": annotation, "uid": principal.uid, "doc": document},
+            )
+            table = "maintainer_annotations"
+        else:
+            row = session.scalar(
+                text(
+                    "SELECT id FROM global_knowledge.document_pages "
+                    "WHERE document_id=:doc AND page_num=:page"
+                ),
+                {"doc": document, "page": page},
+            )
+            table = "document_pages"
+        if row is None:
+            raise LookupError("item not found")
+        value = "NULL" if restore else "COALESCE(deleted_at,now())"
+        session.execute(
+            text(f"UPDATE global_knowledge.{table} SET deleted_at={value} WHERE id=:id"),
+            {"id": row},
+        )

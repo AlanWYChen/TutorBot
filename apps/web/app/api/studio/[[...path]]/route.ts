@@ -15,10 +15,11 @@ export async function proxy(request: NextRequest, context: Context) {
   const datasetId = dataset && uuid.test(path[1] ?? "");
   const datasetAllowed = (dataset && path.length === 1 && ["GET", "POST"].includes(request.method)) || (datasetId && (
     (path.length === 3 && ((path[2] === "cases" && ["GET", "POST"].includes(request.method)) || (path[2] === "export" && get) || (path[2] === "import" && request.method === "POST"))) ||
-    (path.length === 5 && path[2] === "cases" && uuid.test(path[3]) && ((path[4] === "review" && request.method === "POST") || (path[4] === "crop" && get)))
+    (path.length === 5 && path[2] === "cases" && uuid.test(path[3]) && ((path[4] === "review" && request.method === "POST") || (["crop", "annotation"].includes(path[4]) && get)))
   ));
   const bodyLimit = upload ? limit : dataset && path[2] === "import" ? 6 * 1024 * 1024 : 96 * 1024;
-  const allowed = datasetAllowed || (get && path.join("/") === "sources") || upload || (source && (
+  const deletion = source && ((path.length === 2 && request.method === "DELETE") || (path.length === 3 && path[2] === "restore" && request.method === "POST") || (path[2] === "pages" && /^[1-9]\d{0,2}$/.test(path[3] ?? "") && Number(path[3]) <= 200 && ((path.length === 4 && request.method === "DELETE") || (path.length === 5 && path[4] === "restore" && request.method === "POST"))) || (annotation && uuid.test(path[3] ?? "") && ((path.length === 4 && request.method === "DELETE") || (path.length === 5 && path[4] === "restore" && request.method === "POST"))));
+  const allowed = deletion || datasetAllowed || (get && path.join("/") === "sources") || upload || (source && (
     (get && path.length === 3 && ["status", "pages", "file", "annotations"].includes(path[2])) ||
     (request.method === "POST" && path.length === 3 && ["render", "annotations"].includes(path[2])) ||
     (get && path.length === 5 && path[2] === "pages" && path[4] === "image" && /^[1-9]\d{0,2}$/.test(path[3]) && Number(path[3]) <= 200) ||
@@ -30,7 +31,7 @@ export async function proxy(request: NextRequest, context: Context) {
   const headers: Record<string, string> = { Authorization: authorization };
   let exceeded = false;
   let body: ReadableStream<Uint8Array> | undefined;
-  if (upload || (!get && (annotation || dataset))) {
+  if (!deletion && (upload || (!get && (annotation || dataset)))) {
     const key = request.headers.get("idempotency-key") ?? "";
     if (upload && !uuid.test(key)) return error("A UUID Idempotency-Key is required", 422);
     const type = request.headers.get("content-type") ?? "";
@@ -76,3 +77,5 @@ export const GET = proxy;
 export const POST = proxy;
 
 export const PATCH = proxy;
+
+export const DELETE = proxy;

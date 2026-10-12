@@ -1,26 +1,31 @@
 # Maintainer annotation studio
 
-Sign in as the maintainer. Upload an authorized reference or synthetic teaching
-example with title, author, publisher and a license/permission note. The PDF uses
-the same safeguards as student upload; its actual page count is derived server-side.
-The studio cannot import or access a student's private account/PDF. All sources
-and annotations remain draft and excluded from runtime retrieval.
+Sign in as the maintainer. The studio has two tabs:
 
-Open a source, choose its page, then select a source box by dragging or entering
-coordinates. Include the relevant question, response and marking evidence in that
-area. Record question/response text, awarded/possible marks, first error, observed
-work habits, intervention and rationale. Behaviour notes require an observed or
-inferred status; empty evidence remains not observed. Record visible work rather
-than personality, speed or confidence claims. An intervention requires rationale.
+- **PDFs & annotations:** choose a PDF and upload it. Title, author, publisher and
+  permission fields are no longer required in the UI. Select a PDF, page or annotation
+  and edit its labels. Use **New annotation** and select a region for a new question.
+- **Review labels:** choose a collection/question, inspect its crop, edit labels and
+  save. The latest saved labels appear immediately, including edits made from the PDF
+  tab. Approve only after saving. Collection membership and JSONL tools are collapsed.
 
-Saving creates a private PNG crop tied to source SHA-256, page, pixel box and renderer
-version. Reopen a saved row to retrieve its fields and crop. Editing changes the
-notes and creates a new revision; the source box/crop stay fixed. Choose **New
-annotation** for a different area. Conflicting saves refuse rather than overwrite.
-**Reload annotations** refreshes saved rows while leaving current form edits intact;
-select a row to load its current revision. Create retries with unchanged fields reuse
-the existing annotation. Edits use optimistic revision checks; after an interrupted
-edit, reload to determine whether the prior save committed.
+The narrow interface uses selectors; desktop layouts use sidebars. Revision numbers
+are hidden. History and stale-save protection remain internal. Unsaved changes block
+navigation and approval until you save or discard them. Teaching suggestions and
+observation details are available in a collapsed section.
+
+**Delete PDF**, **Delete page** and **Delete annotation** remove the item from the
+active library/viewer, reviews and exports; **Undo deletion** restores it. Page
+removal preserves original page numbering and the original PDF for evidence/Undo.
+These controls do not rewrite or physically purge original source bytes. Existing
+private retention and lifecycle cleanup still apply.
+
+Upload safeguards and ownership are unchanged. Personal metadata does not assert
+publication permission. Dataset transfer still requires rights/privacy review.
+Saving creates a private PNG crop tied to source SHA-256, original page, pixel box
+and renderer. Editing changes labels while the original box/crop stays fixed.
+A teaching suggestion requires rationale, and observation notes distinguish visible
+work from tentative interpretations. Student-private sources remain inaccessible.
 
 ## Private API
 
@@ -56,3 +61,12 @@ Dataset export/import, consent/sanitization and verified golden labels are P1-03
 No automatic model analysis, knowledge publication or student-profile changes occur.
 Real-cloud IAM, complete parser containment and original/derivative/crop lifecycle
 cleanup remain the documented staging gates.
+
+### Current workflow and removal API
+
+`DELETE /sources/{document_id}`, `DELETE /sources/{document_id}/pages/{number}` and
+`DELETE /sources/{document_id}/annotations/{annotation_id}` return 204 for owned
+items. POST the corresponding path with `/restore` appended to undo. Deleted parents
+make their page/annotation/crop routes unavailable. JSONL cases resolve current
+labels and current-revision approvals; edits reset approval eligibility. See
+[ADR 0011](../adr/0011-studio-workflow.md).

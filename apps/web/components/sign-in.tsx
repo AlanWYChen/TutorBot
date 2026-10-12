@@ -11,6 +11,18 @@ Object.assign(activityLabels, {
   "/v1/admin/knowledge/upload": "Maintainer source upload",
   "/v1/admin/knowledge/{resource_id}/file": "Maintainer source download",
   "/v1/admin/knowledge/{resource_id}/status": "Source processing status",
+  "/v1/admin/studio/sources/{document_id}": "PDF removal",
+  "/v1/admin/studio/sources/{document_id}/restore": "PDF restoration",
+  "/v1/admin/studio/sources/{document_id}/pages/{number}": "Page removal",
+  "/v1/admin/studio/sources/{document_id}/pages/{number}/restore": "Page restoration",
+  "/v1/admin/studio/sources/{document_id}/annotations/{annotation_id}/restore": "Annotation restoration",
+  "/v1/admin/studio/datasets": "Review collections",
+  "/v1/admin/studio/datasets/{dataset_id}/cases": "Review labels",
+  "/v1/admin/studio/datasets/{dataset_id}/cases/{case_id}/annotation": "Annotation labels",
+  "/v1/admin/studio/datasets/{dataset_id}/cases/{case_id}/review": "Label approval",
+  "/v1/admin/studio/datasets/{dataset_id}/cases/{case_id}/crop": "Annotation evidence",
+  "/v1/admin/studio/datasets/{dataset_id}/export": "Label export",
+  "/v1/admin/studio/datasets/{dataset_id}/import": "Label import",
   "/v1/admin/studio/sources": "Source documents",
   "/v1/admin/studio/sources/{document_id}/render": "Prepare source pages",
   "/v1/admin/studio/sources/{document_id}/pages": "Source page review",
@@ -66,8 +78,8 @@ export function SignIn() {
     finally { setBusy(false); }
   }
   return <section className="mt-8 rounded-2xl border border-emerald-900/15 bg-white p-8" aria-labelledby="signin-title">
-    <h2 id="signin-title" className="text-2xl font-semibold">{session ? "Your workspace" : "Sign in"}</h2>
-    {session ? <><p role="status" className="mt-4">{session.role === "admin" ? "Maintainer access verified." : "Student access verified. Your account is private to you."}</p>
+    <h2 id="signin-title" className="text-2xl font-semibold">{session ? session.role === "admin" ? "Teaching examples" : "Your workspace" : "Sign in"}</h2>
+    {session ? <><p role="status" className="mt-2 text-sm text-slate-500">{session.role === "admin" ? "Maintainer access verified." : "Student access verified. Your account is private to you."}</p>
       {session.role === "student" ? <AssessmentWorkspace /> : <AnnotationStudio />}
       {session.role === "admin" && <button disabled={busy} onClick={loadActivity} className="mt-6 mr-4 rounded-lg border border-emerald-900 px-5 py-3 disabled:opacity-50">View recent activity</button>}
       {activity && <div className="mt-6 overflow-x-auto"><h3 className="font-semibold">Recent activity</h3><table className="mt-3 w-full text-left text-sm"><thead><tr><th className="py-2">Role</th><th>Action</th><th>Result</th></tr></thead><tbody>{activity.slice(0, 10).map(event => <tr key={event.id} className="border-t border-slate-200"><td className="py-2">{event.actor_role ?? "Signed out"}</td><td>{activityLabels[event.target] ?? "Unknown route"}</td><td>{event.outcome === "success" ? "Allowed" : event.outcome === "denied" ? "Denied" : "Failed"}</td></tr>)}</tbody></table></div>}

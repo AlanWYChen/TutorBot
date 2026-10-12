@@ -25,3 +25,10 @@ it("preserves only validated dataset export options",async()=>{
   expect((await GET(new NextRequest("http://localhost/api/studio?partition=holdout&owner_id=forged",{headers:{Authorization:"Bearer synthetic"}}),context)).status).toBe(422);
   expect((await PATCH(new NextRequest("http://localhost/api/studio",{method:"PATCH",headers:{Authorization:"Bearer synthetic"}}),{params:Promise.resolve({path:["datasets",doc,"cases"]})})).status).toBe(404);
 });
+it("allows only scoped deletion and restore routes without requiring JSON bodies",async()=>{
+  const {DELETE,POST}=await import("../app/api/studio/[[...path]]/route");
+  const fetch=vi.fn().mockResolvedValue(new Response(null,{status:204}));vi.stubGlobal("fetch",fetch);
+  expect((await DELETE(new NextRequest("http://localhost/api/studio",{method:"DELETE",headers:{Authorization:"Bearer synthetic"}}),{params:Promise.resolve({path:["sources",doc,"pages","2"]})})).status).toBe(204);
+  expect((await POST(new NextRequest("http://localhost/api/studio",{method:"POST",headers:{Authorization:"Bearer synthetic"}}),{params:Promise.resolve({path:["sources",doc,"annotations",doc,"restore"]})})).status).toBe(204);
+  expect((await DELETE(new NextRequest("http://localhost/api/studio",{method:"DELETE",headers:{Authorization:"Bearer synthetic"}}),{params:Promise.resolve({path:["datasets",doc]})})).status).toBe(404);
+});

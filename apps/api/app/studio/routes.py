@@ -134,3 +134,52 @@ def crop(document_id: UUID, annotation_id: UUID, principal: Admin) -> Response:
         return png(service.crop(principal, document_id, annotation_id))
     except (LookupError, StorageError) as exc:
         raise boundary(exc) from None
+
+
+@router.delete("/sources/{document_id}", status_code=204)
+def delete_source(document_id: UUID, principal: Admin) -> Response:
+    return remove(principal, document_id)
+
+
+@router.post("/sources/{document_id}/restore", status_code=204)
+def restore_source(document_id: UUID, principal: Admin) -> Response:
+    return remove(principal, document_id, restore=True)
+
+
+@router.delete("/sources/{document_id}/pages/{number}", status_code=204)
+def delete_page(
+    document_id: UUID, number: Annotated[int, Path(ge=1, le=200)], principal: Admin
+) -> Response:
+    return remove(principal, document_id, page=number)
+
+
+@router.post("/sources/{document_id}/pages/{number}/restore", status_code=204)
+def restore_page(
+    document_id: UUID, number: Annotated[int, Path(ge=1, le=200)], principal: Admin
+) -> Response:
+    return remove(principal, document_id, page=number, restore=True)
+
+
+@router.delete("/sources/{document_id}/annotations/{annotation_id}", status_code=204)
+def delete_annotation(document_id: UUID, annotation_id: UUID, principal: Admin) -> Response:
+    return remove(principal, document_id, annotation=annotation_id)
+
+
+@router.post("/sources/{document_id}/annotations/{annotation_id}/restore", status_code=204)
+def restore_annotation(document_id: UUID, annotation_id: UUID, principal: Admin) -> Response:
+    return remove(principal, document_id, annotation=annotation_id, restore=True)
+
+
+def remove(
+    principal: Principal,
+    document: UUID,
+    *,
+    page: int | None = None,
+    annotation: UUID | None = None,
+    restore: bool = False,
+) -> Response:
+    try:
+        service.remove(principal, document, page=page, annotation=annotation, restore=restore)
+    except (LookupError, StorageError, ValueError) as exc:
+        raise boundary(exc) from None
+    return Response(status_code=204)

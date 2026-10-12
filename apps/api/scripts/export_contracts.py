@@ -23,6 +23,10 @@ def main() -> None:
     catalog = dict(ENDPOINT_CONTRACTS)
     catalog.update(
         {
+            "GET /v1/admin/studio/datasets/{dataset_id}/cases/{case_id}/annotation": (
+                None,
+                AnnotationView,
+            ),
             "GET /v1/admin/studio/datasets": (None, DatasetList),
             "POST /v1/admin/studio/datasets": (DatasetCreate, DatasetView),
             "GET /v1/admin/studio/datasets/{dataset_id}/cases": (None, DatasetCases),

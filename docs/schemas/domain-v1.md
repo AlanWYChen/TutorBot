@@ -148,3 +148,11 @@ dataset versions/case snapshots, globally locked source/question splits and appe
 local case reviews. Composite revision/split foreign keys preserve provenance.
 Held-out sources are excluded from all source-bearing published runtime views.
 See [dataset behavior and JSONL v1](../datasets/annotations.md).
+
+### Studio workflow refinement
+
+Migration 0011 adds private deletion timestamps to maintainer pages/annotations and
+current annotation revision binding to appended case reviews. Original snapshots
+remain immutable; review/export use current labels and invalidate stale approvals.
+Deleted sources/pages are excluded from published views without changing their
+column contracts. The schema remains 57 tables.

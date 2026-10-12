@@ -1,24 +1,28 @@
 # Annotation datasets (P1-03)
 
-Maintainers create a named, versioned dataset in the annotation studio. Add a saved
-annotation with its current revision, split, label author and explicit rights,
-deidentification and crop-review attestations. Adding creates an immutable snapshot;
-later annotation edits do not rewrite it. Correct a snapshot by editing the source
-annotation and adding the new revision to a new dataset version. Dataset names and
-versions are unique per maintainer. Each dataset supports at most 50 cases.
+The **Review labels** tab shows each collection's current saved annotation labels.
+Choose a question, edit its fields and save; changes from either studio tab appear
+in review and exports without creating a new dataset version. Revision numbers are
+hidden in the interface. Original snapshots and appended annotation history remain
+internal for provenance.
 
-Open a case to compare the source crop with its pinned labels. The explicit **I
-reviewed these labels — approve case** action appends a local review. Preview exports
-include drafts; evaluation exports include only locally approved cases. Assistant
-labels keep their `assistant_draft` authorship even after a human review. Importing an
-approved transport record always resets its local state to draft.
+An explicit **Approve labels** action appends a review for the current saved labels.
+Editing resets approval eligibility; save before approving again. Exported approved
+material contains only current, locally approved labels. Imported transport approvals
+always reset to draft. Source edits retain source/crop hashes and split reservations.
+
+Create collections, add saved annotations and import/export JSONL through the
+collapsed **Collection tools** section. Dataset names/versions remain unique per
+maintainer. Development and held-out sources stay separate. Deleting a PDF, page or
+annotation excludes its affected cases from review and exports; Undo restores access.
+See [the current workflow decision](../adr/0011-studio-workflow.md).
 
 ## JSONL v1
 
 Each UTF-8 line is a `CaseRecord` (`schema_version: 1`, `record_type:
 annotation_case`): opaque case UUID, development/holdout partition, label origin/state,
-source SHA-256, page number, pixel bbox, renderer version, crop SHA-256, pinned
-annotation revision, structured labels and safety attestations. Nested records are
+source SHA-256, page number, pixel bbox, renderer version, crop SHA-256, annotation
+revision, structured labels and safety attestations. Nested records are
 also versioned. Unknown fields/versions, duplicate keys/IDs and malformed labels
 refuse. No user IDs, filenames, storage paths, URLs, raw PDF or image bytes are
 exported. Limits: 50 records, 128 KiB per line and 5 MiB per archive.
@@ -77,9 +81,10 @@ All paths are under `/v1/admin/studio/datasets`, mounted only on the maintainer 
 | --- | --- |
 | GET / | List owned datasets and counts |
 | POST / | Create a named version with a client UUID |
-| GET /{id}/cases | List live-source snapshots and local approval states |
+| GET /{id}/cases | List current live-source labels and current approval states |
 | POST /{id}/cases | Pin an owned annotation revision as a draft case |
 | GET /{id}/cases/{case}/crop | Authenticated private source evidence |
+| GET /{id}/cases/{case}/annotation | Current owned annotation for inline editing |
 | POST /{id}/cases/{case}/review | Append explicit local label approval |
 | GET /{id}/export?partition=development\|holdout&preview=true\|false | Separate preview or approved JSONL |
 | POST /{id}/import | Import JSONL with privacy/rights reconfirmation |

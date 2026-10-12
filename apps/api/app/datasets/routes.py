@@ -23,6 +23,7 @@ from app.datasets.types import (
 )
 from app.private_io.types import StorageError
 from app.studio.service import Conflict
+from app.studio.types import AnnotationView
 
 router = APIRouter(prefix="/v1/admin/studio/datasets", dependencies=[Depends(require_admin)])
 Admin = Annotated[Principal, Depends(require_admin)]
@@ -143,3 +144,11 @@ async def import_archive(dataset_id: UUID, principal: Admin, request: Request) -
         raise boundary(exc) from None
     finally:
         _slots.release()
+
+
+@router.get("/{dataset_id}/cases/{case_id}/annotation")
+def annotation(dataset_id: UUID, case_id: UUID, principal: Admin) -> AnnotationView:
+    try:
+        return service.annotation(principal, dataset_id, case_id)
+    except LookupError as exc:
+        raise boundary(exc) from None

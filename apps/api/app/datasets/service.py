@@ -1,3 +1,4 @@
+import hashlib
 import time
 from uuid import UUID, uuid4, uuid5
 
@@ -18,7 +19,7 @@ from app.datasets.types import (
 from app.db import engine
 from app.private_io.repository import PrivateRepository
 from app.studio import service as studio
-from app.studio.types import AnnotationContent, AnnotationCreate
+from app.studio.types import AnnotationContent, AnnotationCreate, AnnotationView
 
 
 def owned(session: Session, principal: Principal, dataset: UUID) -> None:
@@ -66,25 +67,14 @@ def view(session: Session, principal: Principal, dataset: UUID) -> DatasetView:
         text("SELECT name,version FROM global_knowledge.annotation_datasets WHERE id=:id"),
         {"id": dataset},
     ).one()
-    counts = session.execute(
-        text(
-            "SELECT count(*) FILTER(WHERE c.partition='development'),"
-            "count(*) FILTER(WHERE c.partition='holdout'),count(r.id) "
-            "FROM global_knowledge.dataset_cases c LEFT JOIN "
-            "global_knowledge.dataset_case_reviews r "
-            "ON r.dataset_id=c.dataset_id AND r.case_id=c.id "
-            "JOIN global_knowledge.storage_objects o ON o.id=c.document_id "
-            "AND o.deleted_at IS NULL WHERE c.dataset_id=:id"
-        ),
-        {"id": dataset},
-    ).one()
+    records = cases_in_session(session, principal, dataset)
     return DatasetView(
         id=dataset,
         name=row[0],
         version=row[1],
-        development=counts[0],
-        holdout=counts[1],
-        approved=counts[2],
+        development=sum(r.partition == "development" for r in records),
+        holdout=sum(r.partition == "holdout" for r in records),
+        approved=sum(r.label_state == "approved" for r in records),
     )
 
 
@@ -223,26 +213,75 @@ def add(principal: Principal, dataset: UUID, payload: CaseAdd) -> CaseRecord:
         return record
 
 
+def validate_edit(session: Session, annotation: UUID, labels: AnnotationContent) -> None:
+    rows: list[dict[str, object]] = list(
+        session.execute(
+            text("SELECT record FROM global_knowledge.dataset_cases WHERE annotation_id=:id"),
+            {"id": annotation},
+        ).scalars()
+    )
+    for raw in rows:
+        record = CaseRecord.model_validate(raw).model_copy(update={"labels": labels})
+        privacy_check(record)
+        lock_split(session, record)
+
+
 def cases_in_session(session: Session, principal: Principal, dataset: UUID) -> list[CaseRecord]:
     owned(session, principal, dataset)
     rows = session.execute(
         text(
-            "SELECT c.record,r.id as reviewed FROM global_knowledge.dataset_cases c "
-            "LEFT JOIN global_knowledge.dataset_case_reviews r ON "
-            "r.dataset_id=c.dataset_id AND r.case_id=c.id "
-            "JOIN global_knowledge.storage_objects o ON o.id=c.document_id AND "
-            "o.deleted_at IS NULL "
-            "WHERE c.dataset_id=:id ORDER BY c.partition,c.source_sha256,"
-            "(c.record->'source'->>'page_number')::int,c.id"
+            "SELECT c.record,c.annotation_revision as "
+            "pinned_revision,a.revision,a.payload,r.id as reviewed "
+            "FROM global_knowledge.dataset_cases c "
+            "JOIN global_knowledge.maintainer_annotations a ON a.id=c.annotation_id "
+            "JOIN global_knowledge.document_regions g ON g.id=a.region_id "
+            "JOIN global_knowledge.document_pages p ON p.id=g.page_id "
+            "JOIN global_knowledge.storage_objects o ON o.id=c.document_id "
+            "LEFT JOIN global_knowledge.dataset_case_reviews r ON r.dataset_id=c.dataset_id "
+            "AND r.case_id=c.id AND r.annotation_revision=a.revision "
+            "WHERE c.dataset_id=:id AND a.created_by_admin_uid=:uid AND o.deleted_at IS NULL "
+            "AND a.deleted_at IS NULL AND p.deleted_at IS NULL "
+            "AND NOT EXISTS (SELECT 1 FROM global_knowledge.dataset_cases newer "
+            "WHERE newer.dataset_id=c.dataset_id AND newer.annotation_id=c.annotation_id "
+            "AND newer.annotation_revision>c.annotation_revision) "
+            "ORDER BY c.partition,c.source_sha256,(c.record->'source'->>'page_number')::int,c.id"
         ),
-        {"id": dataset},
+        {"id": dataset, "uid": principal.uid},
     ).mappings()
-    return [
-        CaseRecord.model_validate(row["record"]).model_copy(
-            update={"label_state": "approved" if row["reviewed"] else "draft"}
+    result = []
+    for row in rows:
+        record = CaseRecord.model_validate(row["record"])
+        changed = row["revision"] != row["pinned_revision"]
+        result.append(
+            record.model_copy(
+                update={
+                    "labels": AnnotationContent.model_validate(row["payload"]),
+                    "annotation_revision": row["revision"]
+                    if changed
+                    else record.annotation_revision,
+                    "label_origin": "maintainer" if changed else record.label_origin,
+                    "label_state": "approved" if row["reviewed"] else "draft",
+                }
+            )
         )
-        for row in rows
-    ]
+    return result
+
+
+def annotation(principal: Principal, dataset: UUID, case: UUID) -> AnnotationView:
+    with Session(engine()) as session, session.begin():
+        owned(session, principal, dataset)
+        row = session.execute(
+            text(
+                "SELECT document_id,annotation_id FROM global_knowledge.dataset_cases "
+                "WHERE dataset_id=:dataset AND id=:case"
+            ),
+            {"dataset": dataset, "case": case},
+        ).one_or_none()
+        if row is None:
+            raise LookupError("case not found")
+        return studio.get_in_session(
+            PrivateRepository(session, principal), principal, row[0], row[1]
+        )
 
 
 def crop(principal: Principal, dataset: UUID, case: UUID) -> bytes:
@@ -267,6 +306,7 @@ def cases(principal: Principal, dataset: UUID) -> list[CaseRecord]:
 
 def approve(principal: Principal, dataset: UUID, case: UUID) -> None:
     with Session(engine()) as session, session.begin():
+        session.execute(text("SELECT pg_advisory_xact_lock(730013)"))
         records = cases_in_session(session, principal, dataset)
         record = next((item for item in records if item.case_id == case), None)
         if record is None:
@@ -275,10 +315,24 @@ def approve(principal: Principal, dataset: UUID, case: UUID) -> None:
         session.execute(
             text(
                 "INSERT INTO global_knowledge.dataset_case_reviews "
-                "(id,dataset_id,case_id,reviewed_by_admin_uid) VALUES (:id,:dataset,:case,:uid) "
+                "(id,dataset_id,case_id,reviewed_by_admin_uid,annotation_revision) "
+                "VALUES (:id,:dataset,:case,:uid,:revision) "
                 "ON CONFLICT DO NOTHING"
             ),
-            {"id": uuid4(), "dataset": dataset, "case": case, "uid": principal.uid},
+            {
+                "id": uuid4(),
+                "dataset": dataset,
+                "case": case,
+                "uid": principal.uid,
+                "revision": session.scalar(
+                    text(
+                        "SELECT a.revision FROM global_knowledge.dataset_cases c "
+                        "JOIN global_knowledge.maintainer_annotations a ON a.id=c.annotation_id "
+                        "WHERE c.dataset_id=:dataset AND c.id=:case"
+                    ),
+                    {"dataset": dataset, "case": case},
+                ),
+            },
         )
 
 
@@ -356,7 +410,10 @@ def import_archive(principal: Principal, dataset: UUID, jsonl: str) -> ImportRes
                 doc,
                 AnnotationCreate(
                     **record.labels.model_dump(),
-                    client_annotation_id=record.case_id,
+                    client_annotation_id=uuid5(
+                        record.case_id,
+                        hashlib.sha256(record.labels.model_dump_json().encode()).hexdigest(),
+                    ),
                     page_number=record.source.page_number,
                     bbox=record.source.bbox,
                 ),
