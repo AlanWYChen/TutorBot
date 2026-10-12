@@ -4,7 +4,7 @@ import { tutorAuth } from "../lib/firebase";
 import { pagePoint, selectionBox, validBox, type Box, type Point } from "../lib/page-coordinates";
 
 type Assessment = { id: string; filename: string; page_count: number; state: string };
-type Page = { id: string; page_number: number; width: number; height: number; rotation: number; candidates: { id: string; label: string; bbox: Box }[] };
+export type Page = { id: string; page_number: number; width: number; height: number; rotation: number; candidates: { id: string; label: string; bbox: Box }[] };
 async function authorized(path: string, signal: AbortSignal, init: RequestInit = {}) {
   const user = (await tutorAuth()).currentUser;
   if (!user) throw new Error("Sign-in required");
@@ -111,10 +111,11 @@ function PageViewer({ assessment, onReady }: { assessment: Assessment; onReady: 
     {page && <><div className="my-4 flex flex-wrap items-center gap-3"><button className={button} disabled={index === 0} onClick={() => setIndex(i => i - 1)}>Previous page</button><label className="text-sm">Page <select value={index} onChange={e => setIndex(Number(e.target.value))} className="rounded border p-2">{pages.map((p, i) => <option value={i} key={p.id}>{p.page_number}</option>)}</select> of {pages.length}</label><button className={button} disabled={index === pages.length - 1} onClick={() => setIndex(i => i + 1)}>Next page</button></div><PageCanvas key={page.id} assessmentId={assessment.id} page={page} /></>}
   </section>;
 }
-function PageCanvas({ assessmentId, page }: { assessmentId: string; page: Page }) {
+export function PageCanvas({ assessmentId, page, imagePath, onSelect, initialBox, annotationMode = false, lockSelection = false }: { assessmentId: string; page: Page; imagePath?: string; onSelect?: (box: Box | null) => void; initialBox?: Box; annotationMode?: boolean; lockSelection?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const start = useRef<Point | null>(null);
-  const [box, setBox] = useState<Box | null>(null);
+  const [box, setBox] = useState<Box | null>(initialBox ?? null);
+  function selectBox(value: Box | null) { setBox(value); onSelect?.(value); }
   const [zoom, setZoom] = useState("fit");
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -122,7 +123,7 @@ function PageCanvas({ assessmentId, page }: { assessmentId: string; page: Page }
     const controller = new AbortController(); let url = "";
     (async () => {
       try {
-        const response = await authorized(`/${assessmentId}/pages/${page.page_number}/image`, controller.signal);
+        const response = imagePath ? await fetch(imagePath, { headers: { Authorization: `Bearer ${await (await tutorAuth()).currentUser?.getIdToken()}` }, signal: controller.signal, cache: "no-store" }) : await authorized(`/${assessmentId}/pages/${page.page_number}/image`, controller.signal);
         if (!response.ok) throw new Error(); url = URL.createObjectURL(await response.blob());
         const image = new Image(); image.src = url; await image.decode();
         if (!controller.signal.aborted && canvas.current) { canvas.current.width = page.width; canvas.current.height = page.height; canvas.current.getContext("2d")?.drawImage(image, 0, 0); setLoaded(true); }
@@ -130,31 +131,31 @@ function PageCanvas({ assessmentId, page }: { assessmentId: string; page: Page }
       finally { if (url) URL.revokeObjectURL(url); }
     })();
     return () => { controller.abort(); if (url) URL.revokeObjectURL(url); };
-  }, [assessmentId, page]);
+  }, [assessmentId, page, imagePath]);
   function pointer(event: React.PointerEvent<HTMLDivElement>) { return pagePoint(event.clientX, event.clientY, event.currentTarget.getBoundingClientRect(), page.width, page.height); }
   function locate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const data = new FormData(event.currentTarget);
     const value = { x: Number(data.get("x")), y: Number(data.get("y")), width: Number(data.get("width")), height: Number(data.get("height")) };
-    if (validBox(value, page.width, page.height)) { setBox(value); setError(""); } else setError("Keep the area inside this page, with positive width and height.");
+    if (validBox(value, page.width, page.height)) { selectBox(value); setError(""); } else setError("Keep the area inside this page, with positive width and height.");
   }
   return <>
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-slate-600">Drag across a question to locate its area.</p><label className="text-sm">Zoom <select className="rounded border p-2" value={zoom} onChange={e => setZoom(e.target.value)}><option value="fit">Fit width</option>{[50, 75, 100, 150, 200].map(z => <option key={z} value={z}>{z}%</option>)}</select></label></div>
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-slate-600">{lockSelection ? "The source box is fixed while editing notes." : "Drag across a question to locate its area."}</p><label className="text-sm">Zoom <select className="rounded border p-2" value={zoom} onChange={e => setZoom(e.target.value)}><option value="fit">Fit width</option>{[50, 75, 100, 150, 200].map(z => <option key={z} value={z}>{z}%</option>)}</select></label></div>
     {error && <p role="alert" className="my-3 text-red-800">{error}</p>}
     {!loaded && !error && <p role="status">Loading page…</p>}
     <div className="overflow-auto rounded-lg border border-slate-300 bg-slate-200 p-2">
       <div className="relative bg-white" style={{ width: zoom === "fit" ? "100%" : page.width * Number(zoom) / 100, aspectRatio: `${page.width}/${page.height}`, touchAction: "none", cursor: "crosshair" }}
-        onPointerDown={event => { if (!loaded) return; start.current = pointer(event); event.currentTarget.setPointerCapture(event.pointerId); setBox(null); }}
+        onPointerDown={event => { if (!loaded || lockSelection) return; start.current = pointer(event); event.currentTarget.setPointerCapture(event.pointerId); selectBox(null); }}
         onPointerMove={event => { if (start.current) setBox(selectionBox(start.current, pointer(event))); }}
-        onPointerUp={event => { if (start.current) { const value = selectionBox(start.current, pointer(event)); setBox(validBox(value, page.width, page.height) ? value : null); start.current = null; } }} onPointerCancel={() => { start.current = null; setBox(null); }}>
+        onPointerUp={event => { if (start.current) { const value = selectionBox(start.current, pointer(event)); selectBox(validBox(value, page.width, page.height) ? value : null); start.current = null; } }} onPointerCancel={() => { start.current = null; selectBox(null); }}>
         <canvas ref={canvas} className="block h-full w-full" aria-label={`PDF page ${page.page_number}. Use the coordinate form below to locate an area with a keyboard.`} />
         <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${page.width} ${page.height}`}>
           {box && <rect x={box.x} y={box.y} width={box.width} height={box.height} fill="#05966922" stroke="#047857" strokeWidth={3} />}
         </svg>
       </div>
     </div>
-    <div className="mt-4"><p className="text-sm font-medium">Question navigation hints</p><p className="mt-1 text-xs text-slate-500">These are possible numbered prompts, not verified questions. Scanned pages may have no hints.</p><div className="mt-2 flex flex-wrap gap-2">{page.candidates.map(candidate => <button key={candidate.id} className={button} onClick={() => { setBox(candidate.bbox); setError(""); }}>{candidate.label}</button>)}{!page.candidates.length && <p className="text-sm text-slate-500">Select a question area directly on the page.</p>}</div></div>
+    <div className="mt-4"><p className="text-sm font-medium">Question navigation hints</p><p className="mt-1 text-xs text-slate-500">These are possible numbered prompts, not verified questions. Scanned pages may have no hints.</p><div className="mt-2 flex flex-wrap gap-2">{page.candidates.map(candidate => <button key={candidate.id} className={button} disabled={lockSelection} onClick={() => { selectBox(candidate.bbox); setError(""); }}>{candidate.label}</button>)}{!page.candidates.length && <p className="text-sm text-slate-500">Select a question area directly on the page.</p>}</div></div>
     <p className="mt-4 text-sm" aria-live="polite">{box ? `Page ${page.page_number} · x ${box.x.toFixed(1)}, y ${box.y.toFixed(1)} · width ${box.width.toFixed(1)}, height ${box.height.toFixed(1)}` : `Page ${page.page_number} · ${page.width} × ${page.height} coordinates`}</p>
-    <form onSubmit={locate} className="mt-3 flex flex-wrap items-end gap-2">{["x", "y", "width", "height"].map(field => <label className="grid gap-1 text-xs capitalize" key={field}>{field}<input key={box ? box[field as keyof Box].toFixed(1) : "empty"} defaultValue={box?.[field as keyof Box].toFixed(1) ?? ""} name={field} type="number" step="0.1" min="0" required className="w-20 rounded border border-slate-300 bg-white p-2" /></label>)}<button className={button} disabled={!loaded}>Locate area</button><button type="button" className={button} onClick={() => setBox(null)}>Clear</button></form>
-    <p className="mt-3 text-xs text-slate-500">Selections are a temporary viewing aid. Saving annotations arrives in the next step.</p>
+    <form onSubmit={locate} className="mt-3 flex flex-wrap items-end gap-2">{["x", "y", "width", "height"].map(field => <label className="grid gap-1 text-xs capitalize" key={field}>{field}<input key={box ? box[field as keyof Box].toFixed(1) : "empty"} defaultValue={box?.[field as keyof Box].toFixed(1) ?? ""} name={field} disabled={lockSelection} type="number" step="0.1" min="0" required className="w-20 rounded border border-slate-300 bg-white p-2" /></label>)}<button className={button} disabled={!loaded || lockSelection}>Locate area</button><button type="button" className={button} disabled={lockSelection} onClick={() => selectBox(null)}>Clear</button></form>
+    <p className="mt-3 text-xs text-slate-500">{annotationMode ? "Select a source area, then save its annotation below." : "Selections are a temporary viewing aid. Saving annotations arrives in the next step."}</p>
   </>;
 }

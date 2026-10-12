@@ -5,10 +5,28 @@ import json
 from pydantic.json_schema import models_json_schema
 
 from app.domain.contracts import ENDPOINT_CONTRACTS
+from app.studio.routes import SourceList, SourcePages
+from app.studio.types import AnnotationCreate, AnnotationEdit, AnnotationList, AnnotationView
 
 
 def main() -> None:
-    models = {model for pair in ENDPOINT_CONTRACTS.values() for model in pair if model is not None}
+    catalog = dict(ENDPOINT_CONTRACTS)
+    catalog.update(
+        {
+            "GET /v1/admin/studio/sources": (None, SourceList),
+            "GET /v1/admin/studio/sources/{document_id}/pages": (None, SourcePages),
+            "GET /v1/admin/studio/sources/{document_id}/annotations": (None, AnnotationList),
+            "POST /v1/admin/studio/sources/{document_id}/annotations": (
+                AnnotationCreate,
+                AnnotationView,
+            ),
+            "PATCH /v1/admin/studio/sources/{document_id}/annotations/{annotation_id}": (
+                AnnotationEdit,
+                AnnotationView,
+            ),
+        }
+    )
+    models = {model for pair in catalog.values() for model in pair if model is not None}
     refs, definitions = models_json_schema(
         [(model, "validation") for model in sorted(models, key=lambda model: model.__name__)]
     )
@@ -17,7 +35,7 @@ def main() -> None:
             "request": refs[(request, "validation")] if request else None,
             "response": refs[(response, "validation")],
         }
-        for endpoint, (request, response) in ENDPOINT_CONTRACTS.items()
+        for endpoint, (request, response) in catalog.items()
     }
     print(
         json.dumps(
@@ -30,6 +48,7 @@ def main() -> None:
                     "GET /v1/student/assessments/{id}/status",
                     "POST /v1/admin/knowledge/upload",
                     "GET /v1/admin/knowledge/{id}/status",
+                    *[endpoint for endpoint in catalog if "/studio/" in endpoint],
                 ],
                 "endpoints": endpoints,
                 **definitions,

@@ -97,7 +97,7 @@ class PrivateRepository:
         return self._enqueue(object_id, idempotency_key, "verify_object")
 
     def enqueue_render(self, object_id: UUID) -> JobStatus:
-        if self.schema != "student_data" or self.object(object_id).media_type != "application/pdf":
+        if self.object(object_id).media_type != "application/pdf":
             raise PermissionError("render_scope_denied")
         return self._enqueue(object_id, "render/v1/" + str(object_id), "render_document")
 

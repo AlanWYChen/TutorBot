@@ -45,16 +45,37 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if registered.startswith("/v1/student/accounts/") and registered.count("/") == 4:
             registered = "/v1/student/accounts/{account_id}"
         segments = registered.split("/")
-        if (len(segments) == 6 and segments[1] == "v1"
-                and tuple(segments[2:4]) in {("student", "assessments"), ("admin", "knowledge")}
-                and segments[5] in {"file", "status"}):
+        if (
+            len(segments) == 6
+            and segments[1] == "v1"
+            and tuple(segments[2:4]) in {("student", "assessments"), ("admin", "knowledge")}
+            and segments[5] in {"file", "status"}
+        ):
             registered = "/".join([*segments[:4], "{resource_id}", segments[5]])
-        if (len(segments) == 6 and segments[1:4] == ["v1", "student", "assessments"]
-                and segments[5] in {"render", "pages"}):
+        if (
+            len(segments) == 6
+            and segments[1:4] == ["v1", "student", "assessments"]
+            and segments[5] in {"render", "pages"}
+        ):
             registered = "/".join([*segments[:4], "{assessment_id}", segments[5]])
-        if (len(segments) == 8 and segments[1:4] == ["v1", "student", "assessments"]
-                and segments[5] == "pages" and segments[7] == "image"):
+        if (
+            len(segments) == 8
+            and segments[1:4] == ["v1", "student", "assessments"]
+            and segments[5] == "pages"
+            and segments[7] == "image"
+        ):
             registered = "/v1/student/assessments/{assessment_id}/pages/{page_number}/image"
+        if segments[1:5] == ["v1", "admin", "studio", "sources"]:
+            if len(segments) == 7 and segments[6] in {"render", "pages", "annotations"}:
+                registered = f"/v1/admin/studio/sources/{{document_id}}/{segments[6]}"
+            elif len(segments) == 9 and segments[6] == "pages" and segments[8] == "image":
+                registered = "/v1/admin/studio/sources/{document_id}/pages/{number}/image"
+            elif len(segments) == 8 and segments[6] == "annotations":
+                registered = "/v1/admin/studio/sources/{document_id}/annotations/{annotation_id}"
+            elif len(segments) == 9 and segments[6] == "annotations" and segments[8] == "crop":
+                registered = (
+                    "/v1/admin/studio/sources/{document_id}/annotations/{annotation_id}/crop"
+                )
         route = cast(Route, registered if registered in ROUTES else "unmatched")
         code = response.status_code
         event = SafeEvent(

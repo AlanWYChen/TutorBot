@@ -8,6 +8,7 @@ from app.auth.routes import admin, router, student
 from app.config import Settings, require_service_credentials
 from app.health import readiness
 from app.model_gateway.registry import configured_models
+from app.studio.routes import router as studio
 from app.uploads.routes import admin_uploads, student_uploads
 
 settings = Settings()
@@ -39,3 +40,6 @@ app.include_router(admin_uploads if settings.service_mode == "admin" else studen
 
 if settings.service_mode == "runtime":
     app.include_router(assessment_viewer)
+
+if settings.service_mode == "admin":
+    app.include_router(studio)

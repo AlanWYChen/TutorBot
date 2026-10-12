@@ -10,7 +10,7 @@ export default async function Home() {
     <section className="mt-12 rounded-2xl border border-emerald-900/15 bg-white p-8" aria-labelledby="status-title">
       <h2 id="status-title" className="text-2xl font-semibold">Local services</h2>
       <p role="status" className="mt-4">{health.status === "ok" ? "Local services are ready." : "Local services are unavailable. Check the development stack."}</p>
-      <p className="mt-4 text-sm leading-6 text-slate-600">Sign in to upload and view your mathematics work. Tutoring and the teaching studio arrive in later reviewed steps.</p>
+      <p className="mt-4 text-sm leading-6 text-slate-600">Sign in to view your mathematics work or annotate maintainer sources. Tutoring arrives in later reviewed steps.</p>
     </section>
     <SignIn />
     <p className="mt-8 text-sm">Initial scope: Ontario Grade 11 mathematics · IB Math AA SL IA context</p>

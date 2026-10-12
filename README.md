@@ -3,9 +3,9 @@
 An evidence-backed high-school mathematics tutor, built ticket by ticket from
 [TUTORBOT_IMPLEMENTATION_PLAYBOOK.md](TUTORBOT_IMPLEMENTATION_PLAYBOOK.md).
 
-Current slice: **P1-01, student upload and private page viewer**. Sign-in, role checks,
+Current slice: **P1-02, maintainer annotation studio**. Sign-in, role checks,
 student-scoped account reads, service isolation and maintainer activity review are functional.
-Students can upload and reopen PDFs, navigate their rendered pages and locate question areas. Saved annotations and tutoring follow in later tickets.
+Students can upload and reopen PDFs, navigate their rendered pages and locate question areas. Maintainers can save/edit source-linked annotations; dataset tooling and tutoring follow in later tickets.
 
 The current implementation and Phase 1 workflow cover **tests/exams**. The planned
 **assignments/projects** section will link a separate requirements upload to a
@@ -189,3 +189,16 @@ invented hints. No model call or mathematical grading runs in this slice.
 [viewer operations](docs/assessments/viewer.md),
 [synthetic review fixture](docs/fixtures/synthetic-quadratics.pdf), and
 [P1-01 acceptance evidence](docs/reviews/P1-01.md).
+
+## Maintainer annotation studio
+
+Sign in as the synthetic maintainer, upload an authorized source with rights metadata,
+and select a question/response area. Save structured notes, marks, observations and
+teaching rationale, then reopen or edit them alongside their original crop. The studio
+cannot read student accounts/PDFs. Sources/annotations stay draft; edits preserve the
+source box/crop and append revision history.
+
+`make studio-integration` verifies save/edit/retrieve, stale-edit rejection, private
+crops, runtime exclusion and source deletion. See [studio operation](docs/studio/annotations.md)
+and [P1-02 acceptance evidence](docs/reviews/P1-02.md). Dataset export/import is next,
+after user review. Every completed implementation step is committed and pushed.

@@ -131,3 +131,12 @@ append-only page/candidate-region and derived-manifest writes. It preserves forc
 RLS and denies unrelated student profiles/conversations and maintainer data.
 Pages persist width/height, rotation and renderer version; bounding boxes use those
 canonical pixels. No mathematical observations or inferred profile states are created.
+
+## P1-02 maintainer annotations
+
+Migrations 0007/0008 extend maintainer annotations with structured payloads, source
+hash/crop references and revision numbers, and add append-only `annotation_revisions`
+(52 tables total). Runtime annotation views are removed and annotation source regions
+are excluded from published retrieval regardless of status. Admin workers can append
+private rendered pages/regions/manifests without student access. Source boxes/crops
+remain fixed through the public edit API; note edits append revision history.

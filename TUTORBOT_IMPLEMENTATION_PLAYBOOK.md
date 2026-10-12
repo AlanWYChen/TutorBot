@@ -424,7 +424,7 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 | Phase | Status | Evidence / PR / commit | Blockers |
 |---|---|---|---|
 | 0 Foundation | Complete locally — all P0 tickets approved; local security gate passed | [P0-05 evidence](docs/reviews/P0-05.md) | Local security checks pass; cloud staging gates pending |
-| 1 Annotation studio | P1-01 implemented and approved | [P1-01 evidence](docs/reviews/P1-01.md) | P1-02 onward pending |
+| 1 Annotation studio | P1-01 approved; P1-02 implemented, awaiting review | [P1-02 evidence](docs/reviews/P1-02.md) | P1-03 onward pending |
 | 2 PDF + math analysis | Not started | | |
 | 3 Student/examiner intelligence | Not started | | |
 | 4 Curriculum + RAG | Not started | | |
@@ -443,7 +443,8 @@ Maintain **development vs held-out** question/teaching scenarios; don't let retr
 - **P0-05:** Implemented, verified and approved. See [acceptance report](docs/reviews/P0-05.md).
 - **Phase 0 local gate:** Auth, ownership, service/worker isolation, upload rejection and safe logging tests pass before agent tools are introduced. Emulator results do not establish cloud IAM.
 - **P1-01:** Implemented, verified and approved. See [acceptance report](docs/reviews/P1-01.md).
-- **Next:** P1-02, authorized after P1-01 approval.
+- **P1-02:** Implemented and verified; awaiting user review. See [acceptance report](docs/reviews/P1-02.md).
+- **Next:** P1-03. Do not continue until the user reviews P1-02.
 
 ## 18. Acceptance scenarios to preserve across the entire build
 

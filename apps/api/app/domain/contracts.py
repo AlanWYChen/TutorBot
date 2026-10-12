@@ -154,7 +154,6 @@ class CohortRange(Contract):
 
 
 class KnowledgeUpload(UploadMetadata):
-    page_count: Annotated[int, Field(strict=True, ge=1, le=MAX_DOCUMENT_PAGES)]
     title: ShortText
     author: ShortText
     publisher: ShortText
