@@ -11,7 +11,14 @@ export async function proxy(request: NextRequest, context: Context) {
   const upload = request.method === "POST" && path.join("/") === "upload";
   const source = path[0] === "sources" && uuid.test(path[1] ?? "");
   const annotation = source && path[2] === "annotations";
-  const allowed = (get && path.join("/") === "sources") || upload || (source && (
+  const dataset = path[0] === "datasets";
+  const datasetId = dataset && uuid.test(path[1] ?? "");
+  const datasetAllowed = (dataset && path.length === 1 && ["GET", "POST"].includes(request.method)) || (datasetId && (
+    (path.length === 3 && ((path[2] === "cases" && ["GET", "POST"].includes(request.method)) || (path[2] === "export" && get) || (path[2] === "import" && request.method === "POST"))) ||
+    (path.length === 5 && path[2] === "cases" && uuid.test(path[3]) && ((path[4] === "review" && request.method === "POST") || (path[4] === "crop" && get)))
+  ));
+  const bodyLimit = upload ? limit : dataset && path[2] === "import" ? 6 * 1024 * 1024 : 96 * 1024;
+  const allowed = datasetAllowed || (get && path.join("/") === "sources") || upload || (source && (
     (get && path.length === 3 && ["status", "pages", "file", "annotations"].includes(path[2])) ||
     (request.method === "POST" && path.length === 3 && ["render", "annotations"].includes(path[2])) ||
     (get && path.length === 5 && path[2] === "pages" && path[4] === "image" && /^[1-9]\d{0,2}$/.test(path[3]) && Number(path[3]) <= 200) ||
@@ -23,14 +30,14 @@ export async function proxy(request: NextRequest, context: Context) {
   const headers: Record<string, string> = { Authorization: authorization };
   let exceeded = false;
   let body: ReadableStream<Uint8Array> | undefined;
-  if (upload || (!get && annotation)) {
+  if (upload || (!get && (annotation || dataset))) {
     const key = request.headers.get("idempotency-key") ?? "";
     if (upload && !uuid.test(key)) return error("A UUID Idempotency-Key is required", 422);
     const type = request.headers.get("content-type") ?? "";
     if (upload && !type.toLowerCase().startsWith("multipart/form-data;")) return error("A multipart PDF upload is required", 415);
     if (request.headers.get("content-encoding") && request.headers.get("content-encoding") !== "identity") return error("Compressed uploads are unsupported", 415);
     const length = request.headers.get("content-length");
-    if (length && (!/^\d+$/.test(length) || Number(length) > (upload ? limit : 96 * 1024))) return error("Upload exceeds the size limit", 413);
+    if (length && (!/^\d+$/.test(length) || Number(length) > bodyLimit)) return error("Upload exceeds the size limit", 413);
     headers["Content-Type"] = type; if (upload) headers["Idempotency-Key"] = key;
     const reader = request.body?.getReader();
     if (!reader) return error("Missing upload", 400);
@@ -40,15 +47,21 @@ export async function proxy(request: NextRequest, context: Context) {
         const chunk = await reader.read();
         if (chunk.done) { controller.close(); return; }
         size += chunk.value.byteLength;
-        if (size > (upload ? limit : 96 * 1024)) { exceeded = true; await reader.cancel(); controller.error(new Error("body_limit")); return; }
+        if (size > bodyLimit) { exceeded = true; await reader.cancel(); controller.error(new Error("body_limit")); return; }
         controller.enqueue(chunk.value);
       } catch { controller.error(new Error("upload_interrupted")); }
     }, cancel: () => reader.cancel() });
   }
   try {
-    const init: RequestInit & { duplex?: "half" } = { method: request.method, headers, cache: "no-store", signal: AbortSignal.timeout(upload ? 120000 : 60000) };
+    const init: RequestInit & { duplex?: "half" } = { method: request.method, headers, cache: "no-store", signal: AbortSignal.timeout(upload || dataset ? 120000 : 60000) };
     if (body) { init.body = body; init.duplex = "half"; }
     let target = "/v1/admin/studio/" + path.join("/");
+    if (dataset && path[2] === "export") {
+      const partition = request.nextUrl.searchParams.get("partition");
+      const preview = request.nextUrl.searchParams.get("preview") ?? "false";
+      if (!["development", "holdout"].includes(partition ?? "") || !["true", "false"].includes(preview) || Array.from(request.nextUrl.searchParams.keys()).some(key => !["partition", "preview"].includes(key))) return error("Invalid export options", 422);
+      target += `?partition=${partition}&preview=${preview}`;
+    }
     if (upload) target = "/v1/admin/knowledge/upload";
     if (source && path.length === 3 && ["file", "status"].includes(path[2])) target = `/v1/admin/knowledge/${path[1]}/${path[2]}`;
     const response = await fetch(`${process.env.ADMIN_API_INTERNAL_URL ?? "http://localhost:8001"}${target}`, init);

@@ -12,7 +12,7 @@ def verify_domain(scratch_url: str, engine: Engine, service_url: str) -> None:
     private = inspector.get_table_names(schema="student_data")
     global_tables = inspector.get_table_names(schema="global_knowledge")
     assert len(private) == 27
-    assert len(global_tables) == 22
+    assert len(global_tables) == 27
     for table in private:
         columns = {
             column["name"]: column for column in inspector.get_columns(table, schema="student_data")

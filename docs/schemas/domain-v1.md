@@ -140,3 +140,11 @@ hash/crop references and revision numbers, and add append-only `annotation_revis
 are excluded from published retrieval regardless of status. Admin workers can append
 private rendered pages/regions/manifests without student access. Source boxes/crops
 remain fixed through the public edit API; note edits append revision history.
+
+### P1-03 annotation datasets
+
+Migrations 0009/0010 add five private global tables (57 tables total): immutable
+dataset versions/case snapshots, globally locked source/question splits and appended
+local case reviews. Composite revision/split foreign keys preserve provenance.
+Held-out sources are excluded from all source-bearing published runtime views.
+See [dataset behavior and JSONL v1](../datasets/annotations.md).

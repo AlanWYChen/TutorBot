@@ -150,108 +150,114 @@ def content(payload: AnnotationContent) -> dict[str, Any]:
 
 def create(principal: Principal, document: UUID, payload: AnnotationCreate) -> AnnotationView:
     with Session(engine()) as session, session.begin():
-        repo = PrivateRepository(session, principal)
-        source(repo, principal, document)
-        annotation_id = uuid5(document, str(payload.client_annotation_id))
-        session.execute(
-            text("SELECT pg_advisory_xact_lock(hashtextextended(:id,0))"),
-            {"id": str(annotation_id)},
-        )
-        existing = session.scalar(
-            text("SELECT id FROM global_knowledge.maintainer_annotations WHERE id=:id"),
-            {"id": annotation_id},
-        )
-        if existing:
-            previous = get_in_session(repo, principal, document, annotation_id)
-            if (
-                content(previous) != content(payload)
-                or previous.bbox != payload.bbox
-                or previous.page_number != payload.page_number
-            ):
-                raise Conflict("annotation retry conflicts")
-            return previous
-        page = page_row(repo, document, payload.page_number)
-        box = payload.bbox
-        if (
-            box.x + box.width > page["dimensions"]["width"]
-            or box.y + box.height > page["dimensions"]["height"]
-        ):
-            raise ValueError("source box exceeds page")
-        source_record = repo.object(document)
-        page_record = repo.object(image_record(repo, document, payload.page_number))
-        png = storage_for(repo.owner).get(page_record)
-        try:
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "app.studio.crop_image",
-                    str(box.x),
-                    str(box.y),
-                    str(box.width),
-                    str(box.height),
-                ],
-                input=png,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                timeout=10,
-                check=True,
-                env={"PYTHONDONTWRITEBYTECODE": "1"},
-            )
-            if (
-                not result.stdout.startswith(b"\x89PNG\r\n\x1a\n")
-                or len(result.stdout) > 25 * 1024 * 1024
-            ):
-                raise ValueError
-        except Exception:
-            raise StorageError("crop unavailable") from None
-        crop_id = uuid5(annotation_id, "crop-v1")
-        # Concrete adapter supports inherited retention; namespace always resolves from auth.
-        from app.private_io.storage import GCSObjectStorage
+        return create_in_session(session, principal, document, payload)
 
-        crop = GCSObjectStorage(Settings(), repo.owner).put(
-            ObjectRef(bucket="teaching-private", owner_id=repo.owner, resource_id=crop_id),
-            result.stdout,
-            "image/png",
-            retention_until=source_record.retention_until,
+
+def create_in_session(
+    session: Session, principal: Principal, document: UUID, payload: AnnotationCreate
+) -> AnnotationView:
+    repo = PrivateRepository(session, principal)
+    source(repo, principal, document)
+    annotation_id = uuid5(document, str(payload.client_annotation_id))
+    session.execute(
+        text("SELECT pg_advisory_xact_lock(hashtextextended(:id,0))"),
+        {"id": str(annotation_id)},
+    )
+    existing = session.scalar(
+        text("SELECT id FROM global_knowledge.maintainer_annotations WHERE id=:id"),
+        {"id": annotation_id},
+    )
+    if existing:
+        previous = get_in_session(repo, principal, document, annotation_id)
+        if (
+            content(previous) != content(payload)
+            or previous.bbox != payload.bbox
+            or previous.page_number != payload.page_number
+        ):
+            raise Conflict("annotation retry conflicts")
+        return previous
+    page = page_row(repo, document, payload.page_number)
+    box = payload.bbox
+    if (
+        box.x + box.width > page["dimensions"]["width"]
+        or box.y + box.height > page["dimensions"]["height"]
+    ):
+        raise ValueError("source box exceeds page")
+    source_record = repo.object(document)
+    page_record = repo.object(image_record(repo, document, payload.page_number))
+    png = storage_for(repo.owner).get(page_record)
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "app.studio.crop_image",
+                str(box.x),
+                str(box.y),
+                str(box.width),
+                str(box.height),
+            ],
+            input=png,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+            check=True,
+            env={"PYTHONDONTWRITEBYTECODE": "1"},
         )
-        repo.register(crop)
-        region_id = uuid5(annotation_id, "source-region")
-        session.execute(
-            text(
-                "INSERT INTO global_knowledge.document_regions "
-                "(id,page_id,bbox,kind,crop_key,extraction_confidence) "
-                "VALUES (:id,:page,CAST(:box AS jsonb),'maintainer_annotation',:key,1)"
-            ),
-            {
-                "id": region_id,
-                "page": page["id"],
-                "box": box.model_dump_json(),
-                "key": crop.ref.key,
-            },
-        )
-        data = content(payload)
-        session.execute(
-            text(
-                "INSERT INTO global_knowledge.maintainer_annotations "
-                "(id,region_id,created_by_admin_uid,annotation,rationale,payload,crop_manifest_id,"
-                "source_sha256) VALUES (:id,:region,:uid,:question,:rationale,"
-                "CAST(:payload AS jsonb),"
-                ":crop,:sha)"
-            ),
-            {
-                "id": annotation_id,
-                "region": region_id,
-                "uid": principal.uid,
-                "question": payload.question,
-                "rationale": payload.rationale,
-                "payload": json.dumps(data),
-                "crop": crop_id,
-                "sha": source_record.sha256,
-            },
-        )
-        revision(session, principal, annotation_id, 1, data)
-        return get_in_session(repo, principal, document, annotation_id)
+        if (
+            not result.stdout.startswith(b"\x89PNG\r\n\x1a\n")
+            or len(result.stdout) > 25 * 1024 * 1024
+        ):
+            raise ValueError
+    except Exception:
+        raise StorageError("crop unavailable") from None
+    crop_id = uuid5(annotation_id, "crop-v1")
+    # Concrete adapter supports inherited retention; namespace always resolves from auth.
+    from app.private_io.storage import GCSObjectStorage
+
+    crop = GCSObjectStorage(Settings(), repo.owner).put(
+        ObjectRef(bucket="teaching-private", owner_id=repo.owner, resource_id=crop_id),
+        result.stdout,
+        "image/png",
+        retention_until=source_record.retention_until,
+    )
+    repo.register(crop)
+    region_id = uuid5(annotation_id, "source-region")
+    session.execute(
+        text(
+            "INSERT INTO global_knowledge.document_regions "
+            "(id,page_id,bbox,kind,crop_key,extraction_confidence) "
+            "VALUES (:id,:page,CAST(:box AS jsonb),'maintainer_annotation',:key,1)"
+        ),
+        {
+            "id": region_id,
+            "page": page["id"],
+            "box": box.model_dump_json(),
+            "key": crop.ref.key,
+        },
+    )
+    data = content(payload)
+    session.execute(
+        text(
+            "INSERT INTO global_knowledge.maintainer_annotations "
+            "(id,region_id,created_by_admin_uid,annotation,rationale,payload,crop_manifest_id,"
+            "source_sha256) VALUES (:id,:region,:uid,:question,:rationale,"
+            "CAST(:payload AS jsonb),"
+            ":crop,:sha)"
+        ),
+        {
+            "id": annotation_id,
+            "region": region_id,
+            "uid": principal.uid,
+            "question": payload.question,
+            "rationale": payload.rationale,
+            "payload": json.dumps(data),
+            "crop": crop_id,
+            "sha": source_record.sha256,
+        },
+    )
+    revision(session, principal, annotation_id, 1, data)
+    return get_in_session(repo, principal, document, annotation_id)
 
 
 def revision(

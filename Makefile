@@ -1,6 +1,6 @@
 MODEL_COMPOSE = $(COMPOSE) -f infra/compose/model-contracts.yaml --profile model-checks
 COMPOSE = docker compose --env-file .env -f infra/compose/compose.yaml
-.PHONY: setup up down status check smoke seed-auth auth-integration model-integration private-io-integration upload-integration viewer-integration studio-integration
+.PHONY: setup up down status check smoke seed-auth auth-integration model-integration private-io-integration upload-integration viewer-integration studio-integration dataset-integration seed-dataset
 setup:
 	@test -f .env || cp .env.example .env
 up:
@@ -41,3 +41,9 @@ viewer-integration:
 
 studio-integration:
 	$(COMPOSE) run --rm --no-deps --build -e RUN_STUDIO_INTEGRATION=1 api-checks pytest tests/test_studio_integration.py
+
+dataset-integration:
+	$(COMPOSE) run --rm --no-deps --build -e RUN_DATASET_INTEGRATION=1 api-checks pytest tests/test_dataset_integration.py
+
+seed-dataset:
+	$(COMPOSE) run --rm --no-deps -v "$(CURDIR)/docs/datasets/synthetic-v1:/output" admin-api python -m scripts.seed_annotation_dataset seed /output

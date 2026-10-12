@@ -76,6 +76,15 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 registered = (
                     "/v1/admin/studio/sources/{document_id}/annotations/{annotation_id}/crop"
                 )
+        if segments[1:5] == ["v1", "admin", "studio", "datasets"]:
+            if len(segments) == 7 and segments[6] in {"cases", "export", "import"}:
+                registered = f"/v1/admin/studio/datasets/{{dataset_id}}/{segments[6]}"
+            elif (
+                len(segments) == 9 and segments[6] == "cases" and segments[8] in {"review", "crop"}
+            ):
+                registered = (
+                    f"/v1/admin/studio/datasets/{{dataset_id}}/cases/{{case_id}}/{segments[8]}"
+                )
         route = cast(Route, registered if registered in ROUTES else "unmatched")
         code = response.status_code
         event = SafeEvent(

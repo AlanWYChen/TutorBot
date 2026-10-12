@@ -4,6 +4,16 @@ import json
 
 from pydantic.json_schema import models_json_schema
 
+from app.datasets.types import (
+    CaseAdd,
+    CaseRecord,
+    DatasetCases,
+    DatasetCreate,
+    DatasetImport,
+    DatasetList,
+    DatasetView,
+    ImportResult,
+)
 from app.domain.contracts import ENDPOINT_CONTRACTS
 from app.studio.routes import SourceList, SourcePages
 from app.studio.types import AnnotationCreate, AnnotationEdit, AnnotationList, AnnotationView
@@ -13,6 +23,11 @@ def main() -> None:
     catalog = dict(ENDPOINT_CONTRACTS)
     catalog.update(
         {
+            "GET /v1/admin/studio/datasets": (None, DatasetList),
+            "POST /v1/admin/studio/datasets": (DatasetCreate, DatasetView),
+            "GET /v1/admin/studio/datasets/{dataset_id}/cases": (None, DatasetCases),
+            "POST /v1/admin/studio/datasets/{dataset_id}/cases": (CaseAdd, CaseRecord),
+            "POST /v1/admin/studio/datasets/{dataset_id}/import": (DatasetImport, ImportResult),
             "GET /v1/admin/studio/sources": (None, SourceList),
             "GET /v1/admin/studio/sources/{document_id}/pages": (None, SourcePages),
             "GET /v1/admin/studio/sources/{document_id}/annotations": (None, AnnotationList),

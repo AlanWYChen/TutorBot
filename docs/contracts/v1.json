@@ -36,6 +36,96 @@
       "title": "AdminAnnotation",
       "type": "object"
     },
+    "AnnotationContent": {
+      "additionalProperties": false,
+      "properties": {
+        "first_error": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "First Error",
+          "type": "string"
+        },
+        "intervention": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "Intervention",
+          "type": "string"
+        },
+        "marks_awarded": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks Awarded"
+        },
+        "marks_possible": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks Possible"
+        },
+        "observation_status": {
+          "default": "not_observed",
+          "enum": [
+            "observed",
+            "inferred",
+            "not_observed"
+          ],
+          "title": "Observation Status",
+          "type": "string"
+        },
+        "observed_behaviours": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "Observed Behaviours",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "rationale": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "response": {
+          "default": "",
+          "maxLength": 8000,
+          "title": "Response",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "question"
+      ],
+      "title": "AnnotationContent",
+      "type": "object"
+    },
     "AnnotationCreate": {
       "additionalProperties": false,
       "properties": {
@@ -741,6 +831,133 @@
       "title": "CandidateView",
       "type": "object"
     },
+    "CaseAdd": {
+      "additionalProperties": false,
+      "properties": {
+        "annotation_id": {
+          "format": "uuid",
+          "title": "Annotation Id",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 1,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "label_origin": {
+          "default": "maintainer",
+          "enum": [
+            "maintainer",
+            "assistant_draft"
+          ],
+          "title": "Label Origin",
+          "type": "string"
+        },
+        "partition": {
+          "enum": [
+            "development",
+            "holdout"
+          ],
+          "title": "Partition",
+          "type": "string"
+        },
+        "safety": {
+          "$ref": "#/$defs/SafetyReview"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "document_id",
+        "annotation_id",
+        "expected_revision",
+        "partition",
+        "safety"
+      ],
+      "title": "CaseAdd",
+      "type": "object"
+    },
+    "CaseRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "annotation_revision": {
+          "minimum": 1,
+          "title": "Annotation Revision",
+          "type": "integer"
+        },
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "label_origin": {
+          "enum": [
+            "maintainer",
+            "assistant_draft"
+          ],
+          "title": "Label Origin",
+          "type": "string"
+        },
+        "label_state": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "approved"
+          ],
+          "title": "Label State",
+          "type": "string"
+        },
+        "labels": {
+          "$ref": "#/$defs/AnnotationContent"
+        },
+        "partition": {
+          "enum": [
+            "development",
+            "holdout"
+          ],
+          "title": "Partition",
+          "type": "string"
+        },
+        "record_type": {
+          "const": "annotation_case",
+          "default": "annotation_case",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "safety": {
+          "$ref": "#/$defs/SafetyReview"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceLocator"
+        }
+      },
+      "required": [
+        "case_id",
+        "partition",
+        "label_origin",
+        "source",
+        "annotation_revision",
+        "labels",
+        "safety"
+      ],
+      "title": "CaseRecord",
+      "type": "object"
+    },
     "ClassifyAssignment": {
       "additionalProperties": false,
       "properties": {
@@ -938,6 +1155,163 @@
         "context"
       ],
       "title": "CreateTutorSession",
+      "type": "object"
+    },
+    "DatasetCases": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "items": {
+            "$ref": "#/$defs/CaseRecord"
+          },
+          "title": "Cases",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cases"
+      ],
+      "title": "DatasetCases",
+      "type": "object"
+    },
+    "DatasetCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "client_dataset_id": {
+          "format": "uuid",
+          "title": "Client Dataset Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9 _-]+$",
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "version": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "client_dataset_id"
+      ],
+      "title": "DatasetCreate",
+      "type": "object"
+    },
+    "DatasetImport": {
+      "additionalProperties": false,
+      "properties": {
+        "jsonl": {
+          "maxLength": 5242880,
+          "minLength": 1,
+          "title": "Jsonl",
+          "type": "string"
+        },
+        "safety_reconfirmed": {
+          "const": true,
+          "title": "Safety Reconfirmed",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "jsonl",
+        "safety_reconfirmed"
+      ],
+      "title": "DatasetImport",
+      "type": "object"
+    },
+    "DatasetList": {
+      "additionalProperties": false,
+      "properties": {
+        "datasets": {
+          "items": {
+            "$ref": "#/$defs/DatasetView"
+          },
+          "title": "Datasets",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "datasets"
+      ],
+      "title": "DatasetList",
+      "type": "object"
+    },
+    "DatasetView": {
+      "additionalProperties": false,
+      "properties": {
+        "approved": {
+          "title": "Approved",
+          "type": "integer"
+        },
+        "development": {
+          "title": "Development",
+          "type": "integer"
+        },
+        "holdout": {
+          "title": "Holdout",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "development",
+        "holdout",
+        "approved"
+      ],
+      "title": "DatasetView",
       "type": "object"
     },
     "DemonstrationCreate": {
@@ -1200,6 +1574,31 @@
         "traits"
       ],
       "title": "FingerprintResponse",
+      "type": "object"
+    },
+    "ImportResult": {
+      "additionalProperties": false,
+      "properties": {
+        "imported": {
+          "title": "Imported",
+          "type": "integer"
+        },
+        "reused": {
+          "title": "Reused",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "imported",
+        "reused"
+      ],
+      "title": "ImportResult",
       "type": "object"
     },
     "JobAccepted": {
@@ -2075,6 +2474,62 @@
       "title": "ResourceCreated",
       "type": "object"
     },
+    "SafetyReview": {
+      "additionalProperties": false,
+      "properties": {
+        "consent_reference": {
+          "anyOf": [
+            {
+              "pattern": "^consent-[a-z0-9-]{1,64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Consent Reference"
+        },
+        "crop_reviewed": {
+          "const": true,
+          "title": "Crop Reviewed",
+          "type": "boolean"
+        },
+        "origin": {
+          "enum": [
+            "synthetic",
+            "licensed",
+            "consented_maintainer_material"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "rights_confirmed": {
+          "const": true,
+          "title": "Rights Confirmed",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "text_deidentified": {
+          "const": true,
+          "title": "Text Deidentified",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "origin",
+        "rights_confirmed",
+        "text_deidentified",
+        "crop_reviewed"
+      ],
+      "title": "SafetyReview",
+      "type": "object"
+    },
     "SkillProposal": {
       "additionalProperties": false,
       "properties": {
@@ -2162,6 +2617,51 @@
         "documents"
       ],
       "title": "SourceList",
+      "type": "object"
+    },
+    "SourceLocator": {
+      "additionalProperties": false,
+      "properties": {
+        "bbox": {
+          "$ref": "#/$defs/BoundingBox"
+        },
+        "crop_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Crop Sha256",
+          "type": "string"
+        },
+        "page_number": {
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "render_version": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Render Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "page_number",
+        "bbox",
+        "render_version",
+        "crop_sha256"
+      ],
+      "title": "SourceLocator",
       "type": "object"
     },
     "SourcePages": {
@@ -2409,6 +2909,18 @@
         "$ref": "#/$defs/KnowledgeUploadStatus"
       }
     },
+    "GET /v1/admin/studio/datasets": {
+      "request": null,
+      "response": {
+        "$ref": "#/$defs/DatasetList"
+      }
+    },
+    "GET /v1/admin/studio/datasets/{dataset_id}/cases": {
+      "request": null,
+      "response": {
+        "$ref": "#/$defs/DatasetCases"
+      }
+    },
     "GET /v1/admin/studio/sources": {
       "request": null,
       "response": {
@@ -2531,6 +3043,30 @@
         "$ref": "#/$defs/JobAccepted"
       }
     },
+    "POST /v1/admin/studio/datasets": {
+      "request": {
+        "$ref": "#/$defs/DatasetCreate"
+      },
+      "response": {
+        "$ref": "#/$defs/DatasetView"
+      }
+    },
+    "POST /v1/admin/studio/datasets/{dataset_id}/cases": {
+      "request": {
+        "$ref": "#/$defs/CaseAdd"
+      },
+      "response": {
+        "$ref": "#/$defs/CaseRecord"
+      }
+    },
+    "POST /v1/admin/studio/datasets/{dataset_id}/import": {
+      "request": {
+        "$ref": "#/$defs/DatasetImport"
+      },
+      "response": {
+        "$ref": "#/$defs/ImportResult"
+      }
+    },
     "POST /v1/admin/studio/sources/{document_id}/annotations": {
       "request": {
         "$ref": "#/$defs/AnnotationCreate"
@@ -2577,6 +3113,11 @@
     "GET /v1/student/assessments/{id}/status",
     "POST /v1/admin/knowledge/upload",
     "GET /v1/admin/knowledge/{id}/status",
+    "GET /v1/admin/studio/datasets",
+    "POST /v1/admin/studio/datasets",
+    "GET /v1/admin/studio/datasets/{dataset_id}/cases",
+    "POST /v1/admin/studio/datasets/{dataset_id}/cases",
+    "POST /v1/admin/studio/datasets/{dataset_id}/import",
     "GET /v1/admin/studio/sources",
     "GET /v1/admin/studio/sources/{document_id}/pages",
     "GET /v1/admin/studio/sources/{document_id}/annotations",

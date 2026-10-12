@@ -6,6 +6,7 @@ from app.audit import configure_logging
 from app.audit_middleware import AuditMiddleware
 from app.auth.routes import admin, router, student
 from app.config import Settings, require_service_credentials
+from app.datasets.routes import router as datasets
 from app.health import readiness
 from app.model_gateway.registry import configured_models
 from app.studio.routes import router as studio
@@ -43,3 +44,4 @@ if settings.service_mode == "runtime":
 
 if settings.service_mode == "admin":
     app.include_router(studio)
+    app.include_router(datasets)

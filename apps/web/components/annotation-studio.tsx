@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { AnnotationDatasets } from "./annotation-datasets";
 import { tutorAuth } from "../lib/firebase";
 import { PageCanvas, type Page } from "./assessment-workspace";
 import type { Box } from "../lib/page-coordinates";
@@ -45,6 +46,7 @@ export function AnnotationStudio() {
     <div className="mt-5 flex items-center justify-between"><h4 className="font-medium">Your source documents</h4><button className={button} onClick={() => refresh(controller.current!.signal).catch(() => setMessage("Unable to refresh sources."))}>Refresh sources</button></div>
     <ul className="mt-3 grid gap-2">{sources.map(source => <li key={source.id}><button className={`${button} w-full text-left`} onClick={() => setActive(source)}>{source.filename} · {source.page_count} pages</button></li>)}</ul>
     {active && <SourceEditor key={active.id} source={active} />}
+    <AnnotationDatasets sources={sources} />
   </div>;
 }
 function SourceEditor({ source }: { source: Source }) {

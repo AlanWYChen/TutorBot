@@ -16,3 +16,12 @@ it("sends edits only to fixed maintainer API paths without client scope headers"
   expect(response.status).toBe(200);expect(response.headers.get("Cache-Control")).toBe("no-store");
   expect(fetch).toHaveBeenCalledWith(`http://admin-api:8000/v1/admin/studio/sources/${doc}/annotations/${doc}`,expect.objectContaining({method:"PATCH",headers:{Authorization:"Bearer synthetic","Content-Type":"application/json"}}));
 });
+it("preserves only validated dataset export options",async()=>{
+  const fetch=vi.fn().mockResolvedValue(new Response('{"schema_version":1}\n',{headers:{"Content-Type":"application/x-ndjson"}}));vi.stubGlobal("fetch",fetch);vi.stubEnv("ADMIN_API_INTERNAL_URL","http://admin-api:8000");
+  const context={params:Promise.resolve({path:["datasets",doc,"export"]})};
+  const response=await GET(new NextRequest("http://localhost/api/studio?partition=holdout&preview=true",{headers:{Authorization:"Bearer synthetic"}}),context);
+  expect(response.status).toBe(200);
+  expect(fetch).toHaveBeenCalledWith(`http://admin-api:8000/v1/admin/studio/datasets/${doc}/export?partition=holdout&preview=true`,expect.anything());
+  expect((await GET(new NextRequest("http://localhost/api/studio?partition=holdout&owner_id=forged",{headers:{Authorization:"Bearer synthetic"}}),context)).status).toBe(422);
+  expect((await PATCH(new NextRequest("http://localhost/api/studio",{method:"PATCH",headers:{Authorization:"Bearer synthetic"}}),{params:Promise.resolve({path:["datasets",doc,"cases"]})})).status).toBe(404);
+});

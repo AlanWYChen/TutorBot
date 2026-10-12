@@ -1,6 +1,6 @@
 # ADR 0009: Private maintainer annotation studio
 
-Status: implemented for P1-02; user review pending.
+Status: implemented for P1-02; approved by the user.
 
 The studio operates only on sources uploaded by the verified maintainer into
 teaching-private. It cannot read student accounts, private PDFs or assessment

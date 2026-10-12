@@ -1,0 +1,802 @@
+[
+  {
+    "key": "square_roots-2",
+    "family": "square_roots",
+    "partition": "development",
+    "correct_answer": "x = 2 or x = -2",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve x^2 - 4 = 0.",
+      "response": "x = 2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "Only the positive root is written.",
+      "observed_behaviours": "The visible response is: x = 2",
+      "observation_status": "observed",
+      "intervention": "Ask which two values square to the given constant.",
+      "rationale": "Testing both signs checks the omitted root."
+    },
+    "page_number": 1,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "zero_product-2",
+    "family": "zero_product",
+    "partition": "development",
+    "correct_answer": "x = 2 or x = -3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve (x - 2)(x + 3) = 0.",
+      "response": "x = 2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second factor's root is missing.",
+      "observed_behaviours": "The visible response is: x = 2",
+      "observation_status": "observed",
+      "intervention": "Set each factor equal to zero separately.",
+      "rationale": "Both factors can make the product zero."
+    },
+    "page_number": 2,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "expansion-2",
+    "family": "expansion",
+    "partition": "development",
+    "correct_answer": "x^2 + 1x - 2",
+    "labels": {
+      "schema_version": 1,
+      "question": "Expand (x + 2)(x - 1).",
+      "response": "x^2 + 3x - 2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written middle coefficient is incorrect.",
+      "observed_behaviours": "The visible response is: x^2 + 3x - 2",
+      "observation_status": "observed",
+      "intervention": "Write the two cross products before combining them.",
+      "rationale": "Separate cross products make the negative term visible."
+    },
+    "page_number": 3,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "vertex-2",
+    "family": "vertex",
+    "partition": "development",
+    "correct_answer": "(2, 3)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the vertex of y = (x - 2)^2 + 3.",
+      "response": "(2, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The vertex's vertical coordinate is incorrect.",
+      "observed_behaviours": "The visible response is: (2, 0)",
+      "observation_status": "observed",
+      "intervention": "Substitute x = 2 into the function.",
+      "rationale": "Substitution exposes the vertical shift."
+    },
+    "page_number": 4,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "axis-2",
+    "family": "axis",
+    "partition": "development",
+    "correct_answer": "x = -2",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the axis of symmetry of y = (x + 2)^2 - 1.",
+      "response": "x = 2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written axis has the wrong sign.",
+      "observed_behaviours": "The visible response is: x = 2",
+      "observation_status": "observed",
+      "intervention": "Find the x value that makes the squared expression zero.",
+      "rationale": "Solving the inner expression checks the horizontal shift."
+    },
+    "page_number": 5,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "discriminant-2",
+    "family": "discriminant",
+    "partition": "development",
+    "correct_answer": "D = 8",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the discriminant of x^2 + 4x + 2 = 0.",
+      "response": "D = (4)^2 + 4(2) = 24",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response adds 4ac instead of subtracting it.",
+      "observed_behaviours": "The visible response is: D = (4)^2 + 4(2) = 24",
+      "observation_status": "observed",
+      "intervention": "Write b^2 - 4ac, then substitute a, b and c.",
+      "rationale": "Preserving the subtraction sign corrects the formula."
+    },
+    "page_number": 6,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "intercept-2",
+    "family": "intercept",
+    "partition": "development",
+    "correct_answer": "(0, 2)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the y-intercept of y = x^2 - 3x + 2.",
+      "response": "(2, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The coordinates written for the y-intercept are reversed.",
+      "observed_behaviours": "The visible response is: (2, 0)",
+      "observation_status": "observed",
+      "intervention": "Set x to zero and write the resulting point.",
+      "rationale": "A y-intercept lies on the y-axis."
+    },
+    "page_number": 7,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "common_factor-2",
+    "family": "common_factor",
+    "partition": "development",
+    "correct_answer": "2x(x - 2)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Factor 2x^2 - 4x completely.",
+      "response": "2x(x + 2)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second term inside the factor has the wrong sign.",
+      "observed_behaviours": "The visible response is: 2x(x + 2)",
+      "observation_status": "observed",
+      "intervention": "Divide each original term by the common factor, then expand to check.",
+      "rationale": "Division and expansion verify the sign."
+    },
+    "page_number": 8,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "turning_point-2",
+    "family": "turning_point",
+    "partition": "development",
+    "correct_answer": "Maximum at (2, 4)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Classify the turning point of y = -(x - 2)^2 + 4.",
+      "response": "Minimum at (2, 4)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response labels the turning point as a minimum.",
+      "observed_behaviours": "The visible response is: Minimum at (2, 4)",
+      "observation_status": "observed",
+      "intervention": "Compare nearby y values with the turning-point value.",
+      "rationale": "The negative square makes nearby values smaller."
+    },
+    "page_number": 9,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "complete_square-2",
+    "family": "complete_square",
+    "partition": "development",
+    "correct_answer": "(x + 2)^2 + 3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Complete the square: x^2 + 4x + 7.",
+      "response": "(x + 2)^2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The constant adjustment is missing from the written expression.",
+      "observed_behaviours": "The visible response is: (x + 2)^2",
+      "observation_status": "observed",
+      "intervention": "Expand the proposed square and compare constant terms.",
+      "rationale": "The constant difference identifies the required adjustment."
+    },
+    "page_number": 10,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "square_roots-3",
+    "family": "square_roots",
+    "partition": "development",
+    "correct_answer": "x = 3 or x = -3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve x^2 - 9 = 0.",
+      "response": "x = 3",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "Only the positive root is written.",
+      "observed_behaviours": "The visible response is: x = 3",
+      "observation_status": "observed",
+      "intervention": "Ask which two values square to the given constant.",
+      "rationale": "Testing both signs checks the omitted root."
+    },
+    "page_number": 11,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "zero_product-3",
+    "family": "zero_product",
+    "partition": "development",
+    "correct_answer": "x = 3 or x = -4",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve (x - 3)(x + 4) = 0.",
+      "response": "x = 3",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second factor's root is missing.",
+      "observed_behaviours": "The visible response is: x = 3",
+      "observation_status": "observed",
+      "intervention": "Set each factor equal to zero separately.",
+      "rationale": "Both factors can make the product zero."
+    },
+    "page_number": 12,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "expansion-3",
+    "family": "expansion",
+    "partition": "development",
+    "correct_answer": "x^2 + 2x - 3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Expand (x + 3)(x - 1).",
+      "response": "x^2 + 4x - 3",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written middle coefficient is incorrect.",
+      "observed_behaviours": "The visible response is: x^2 + 4x - 3",
+      "observation_status": "observed",
+      "intervention": "Write the two cross products before combining them.",
+      "rationale": "Separate cross products make the negative term visible."
+    },
+    "page_number": 13,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "vertex-3",
+    "family": "vertex",
+    "partition": "development",
+    "correct_answer": "(3, 4)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the vertex of y = (x - 3)^2 + 4.",
+      "response": "(3, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The vertex's vertical coordinate is incorrect.",
+      "observed_behaviours": "The visible response is: (3, 0)",
+      "observation_status": "observed",
+      "intervention": "Substitute x = 3 into the function.",
+      "rationale": "Substitution exposes the vertical shift."
+    },
+    "page_number": 14,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "axis-3",
+    "family": "axis",
+    "partition": "development",
+    "correct_answer": "x = -3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the axis of symmetry of y = (x + 3)^2 - 1.",
+      "response": "x = 3",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written axis has the wrong sign.",
+      "observed_behaviours": "The visible response is: x = 3",
+      "observation_status": "observed",
+      "intervention": "Find the x value that makes the squared expression zero.",
+      "rationale": "Solving the inner expression checks the horizontal shift."
+    },
+    "page_number": 15,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "discriminant-3",
+    "family": "discriminant",
+    "partition": "development",
+    "correct_answer": "D = 13",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the discriminant of x^2 + 5x + 3 = 0.",
+      "response": "D = (5)^2 + 4(3) = 37",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response adds 4ac instead of subtracting it.",
+      "observed_behaviours": "The visible response is: D = (5)^2 + 4(3) = 37",
+      "observation_status": "observed",
+      "intervention": "Write b^2 - 4ac, then substitute a, b and c.",
+      "rationale": "Preserving the subtraction sign corrects the formula."
+    },
+    "page_number": 16,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "intercept-3",
+    "family": "intercept",
+    "partition": "development",
+    "correct_answer": "(0, 3)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the y-intercept of y = x^2 - 4x + 3.",
+      "response": "(3, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The coordinates written for the y-intercept are reversed.",
+      "observed_behaviours": "The visible response is: (3, 0)",
+      "observation_status": "observed",
+      "intervention": "Set x to zero and write the resulting point.",
+      "rationale": "A y-intercept lies on the y-axis."
+    },
+    "page_number": 17,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "common_factor-3",
+    "family": "common_factor",
+    "partition": "development",
+    "correct_answer": "3x(x - 3)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Factor 3x^2 - 9x completely.",
+      "response": "3x(x + 3)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second term inside the factor has the wrong sign.",
+      "observed_behaviours": "The visible response is: 3x(x + 3)",
+      "observation_status": "observed",
+      "intervention": "Divide each original term by the common factor, then expand to check.",
+      "rationale": "Division and expansion verify the sign."
+    },
+    "page_number": 18,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "turning_point-3",
+    "family": "turning_point",
+    "partition": "development",
+    "correct_answer": "Maximum at (3, 9)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Classify the turning point of y = -(x - 3)^2 + 9.",
+      "response": "Minimum at (3, 9)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response labels the turning point as a minimum.",
+      "observed_behaviours": "The visible response is: Minimum at (3, 9)",
+      "observation_status": "observed",
+      "intervention": "Compare nearby y values with the turning-point value.",
+      "rationale": "The negative square makes nearby values smaller."
+    },
+    "page_number": 19,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "complete_square-3",
+    "family": "complete_square",
+    "partition": "development",
+    "correct_answer": "(x + 3)^2 + 3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Complete the square: x^2 + 6x + 12.",
+      "response": "(x + 3)^2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The constant adjustment is missing from the written expression.",
+      "observed_behaviours": "The visible response is: (x + 3)^2",
+      "observation_status": "observed",
+      "intervention": "Expand the proposed square and compare constant terms.",
+      "rationale": "The constant difference identifies the required adjustment."
+    },
+    "page_number": 20,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "square_roots-4",
+    "family": "square_roots",
+    "partition": "development",
+    "correct_answer": "x = 4 or x = -4",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve x^2 - 16 = 0.",
+      "response": "x = 4",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "Only the positive root is written.",
+      "observed_behaviours": "The visible response is: x = 4",
+      "observation_status": "observed",
+      "intervention": "Ask which two values square to the given constant.",
+      "rationale": "Testing both signs checks the omitted root."
+    },
+    "page_number": 21,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "zero_product-4",
+    "family": "zero_product",
+    "partition": "development",
+    "correct_answer": "x = 4 or x = -5",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve (x - 4)(x + 5) = 0.",
+      "response": "x = 4",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second factor's root is missing.",
+      "observed_behaviours": "The visible response is: x = 4",
+      "observation_status": "observed",
+      "intervention": "Set each factor equal to zero separately.",
+      "rationale": "Both factors can make the product zero."
+    },
+    "page_number": 22,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "expansion-4",
+    "family": "expansion",
+    "partition": "development",
+    "correct_answer": "x^2 + 3x - 4",
+    "labels": {
+      "schema_version": 1,
+      "question": "Expand (x + 4)(x - 1).",
+      "response": "x^2 + 5x - 4",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written middle coefficient is incorrect.",
+      "observed_behaviours": "The visible response is: x^2 + 5x - 4",
+      "observation_status": "observed",
+      "intervention": "Write the two cross products before combining them.",
+      "rationale": "Separate cross products make the negative term visible."
+    },
+    "page_number": 23,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "vertex-4",
+    "family": "vertex",
+    "partition": "development",
+    "correct_answer": "(4, 5)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the vertex of y = (x - 4)^2 + 5.",
+      "response": "(4, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The vertex's vertical coordinate is incorrect.",
+      "observed_behaviours": "The visible response is: (4, 0)",
+      "observation_status": "observed",
+      "intervention": "Substitute x = 4 into the function.",
+      "rationale": "Substitution exposes the vertical shift."
+    },
+    "page_number": 24,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "axis-4",
+    "family": "axis",
+    "partition": "development",
+    "correct_answer": "x = -4",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the axis of symmetry of y = (x + 4)^2 - 1.",
+      "response": "x = 4",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written axis has the wrong sign.",
+      "observed_behaviours": "The visible response is: x = 4",
+      "observation_status": "observed",
+      "intervention": "Find the x value that makes the squared expression zero.",
+      "rationale": "Solving the inner expression checks the horizontal shift."
+    },
+    "page_number": 25,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "discriminant-4",
+    "family": "discriminant",
+    "partition": "development",
+    "correct_answer": "D = 20",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the discriminant of x^2 + 6x + 4 = 0.",
+      "response": "D = (6)^2 + 4(4) = 52",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response adds 4ac instead of subtracting it.",
+      "observed_behaviours": "The visible response is: D = (6)^2 + 4(4) = 52",
+      "observation_status": "observed",
+      "intervention": "Write b^2 - 4ac, then substitute a, b and c.",
+      "rationale": "Preserving the subtraction sign corrects the formula."
+    },
+    "page_number": 26,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "intercept-4",
+    "family": "intercept",
+    "partition": "development",
+    "correct_answer": "(0, 4)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the y-intercept of y = x^2 - 5x + 4.",
+      "response": "(4, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The coordinates written for the y-intercept are reversed.",
+      "observed_behaviours": "The visible response is: (4, 0)",
+      "observation_status": "observed",
+      "intervention": "Set x to zero and write the resulting point.",
+      "rationale": "A y-intercept lies on the y-axis."
+    },
+    "page_number": 27,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "common_factor-4",
+    "family": "common_factor",
+    "partition": "development",
+    "correct_answer": "4x(x - 4)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Factor 4x^2 - 16x completely.",
+      "response": "4x(x + 4)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second term inside the factor has the wrong sign.",
+      "observed_behaviours": "The visible response is: 4x(x + 4)",
+      "observation_status": "observed",
+      "intervention": "Divide each original term by the common factor, then expand to check.",
+      "rationale": "Division and expansion verify the sign."
+    },
+    "page_number": 28,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "turning_point-4",
+    "family": "turning_point",
+    "partition": "development",
+    "correct_answer": "Maximum at (4, 16)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Classify the turning point of y = -(x - 4)^2 + 16.",
+      "response": "Minimum at (4, 16)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response labels the turning point as a minimum.",
+      "observed_behaviours": "The visible response is: Minimum at (4, 16)",
+      "observation_status": "observed",
+      "intervention": "Compare nearby y values with the turning-point value.",
+      "rationale": "The negative square makes nearby values smaller."
+    },
+    "page_number": 29,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "complete_square-4",
+    "family": "complete_square",
+    "partition": "development",
+    "correct_answer": "(x + 4)^2 + 3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Complete the square: x^2 + 8x + 19.",
+      "response": "(x + 4)^2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The constant adjustment is missing from the written expression.",
+      "observed_behaviours": "The visible response is: (x + 4)^2",
+      "observation_status": "observed",
+      "intervention": "Expand the proposed square and compare constant terms.",
+      "rationale": "The constant difference identifies the required adjustment."
+    },
+    "page_number": 30,
+    "source_sha256": "9c70fb1bf04e679ae38903c37ab836370ad48f8a301397e31c7ae6787e3ed4fa"
+  },
+  {
+    "key": "square_roots-5",
+    "family": "square_roots",
+    "partition": "holdout",
+    "correct_answer": "x = 5 or x = -5",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve x^2 - 25 = 0.",
+      "response": "x = 5",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "Only the positive root is written.",
+      "observed_behaviours": "The visible response is: x = 5",
+      "observation_status": "observed",
+      "intervention": "Ask which two values square to the given constant.",
+      "rationale": "Testing both signs checks the omitted root."
+    },
+    "page_number": 1,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "zero_product-5",
+    "family": "zero_product",
+    "partition": "holdout",
+    "correct_answer": "x = 5 or x = -6",
+    "labels": {
+      "schema_version": 1,
+      "question": "Solve (x - 5)(x + 6) = 0.",
+      "response": "x = 5",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second factor's root is missing.",
+      "observed_behaviours": "The visible response is: x = 5",
+      "observation_status": "observed",
+      "intervention": "Set each factor equal to zero separately.",
+      "rationale": "Both factors can make the product zero."
+    },
+    "page_number": 2,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "expansion-5",
+    "family": "expansion",
+    "partition": "holdout",
+    "correct_answer": "x^2 + 4x - 5",
+    "labels": {
+      "schema_version": 1,
+      "question": "Expand (x + 5)(x - 1).",
+      "response": "x^2 + 6x - 5",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written middle coefficient is incorrect.",
+      "observed_behaviours": "The visible response is: x^2 + 6x - 5",
+      "observation_status": "observed",
+      "intervention": "Write the two cross products before combining them.",
+      "rationale": "Separate cross products make the negative term visible."
+    },
+    "page_number": 3,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "vertex-5",
+    "family": "vertex",
+    "partition": "holdout",
+    "correct_answer": "(5, 6)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the vertex of y = (x - 5)^2 + 6.",
+      "response": "(5, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The vertex's vertical coordinate is incorrect.",
+      "observed_behaviours": "The visible response is: (5, 0)",
+      "observation_status": "observed",
+      "intervention": "Substitute x = 5 into the function.",
+      "rationale": "Substitution exposes the vertical shift."
+    },
+    "page_number": 4,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "axis-5",
+    "family": "axis",
+    "partition": "holdout",
+    "correct_answer": "x = -5",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the axis of symmetry of y = (x + 5)^2 - 1.",
+      "response": "x = 5",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The written axis has the wrong sign.",
+      "observed_behaviours": "The visible response is: x = 5",
+      "observation_status": "observed",
+      "intervention": "Find the x value that makes the squared expression zero.",
+      "rationale": "Solving the inner expression checks the horizontal shift."
+    },
+    "page_number": 5,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "discriminant-5",
+    "family": "discriminant",
+    "partition": "holdout",
+    "correct_answer": "D = 29",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the discriminant of x^2 + 7x + 5 = 0.",
+      "response": "D = (7)^2 + 4(5) = 69",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response adds 4ac instead of subtracting it.",
+      "observed_behaviours": "The visible response is: D = (7)^2 + 4(5) = 69",
+      "observation_status": "observed",
+      "intervention": "Write b^2 - 4ac, then substitute a, b and c.",
+      "rationale": "Preserving the subtraction sign corrects the formula."
+    },
+    "page_number": 6,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "intercept-5",
+    "family": "intercept",
+    "partition": "holdout",
+    "correct_answer": "(0, 5)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Find the y-intercept of y = x^2 - 6x + 5.",
+      "response": "(5, 0)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The coordinates written for the y-intercept are reversed.",
+      "observed_behaviours": "The visible response is: (5, 0)",
+      "observation_status": "observed",
+      "intervention": "Set x to zero and write the resulting point.",
+      "rationale": "A y-intercept lies on the y-axis."
+    },
+    "page_number": 7,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "common_factor-5",
+    "family": "common_factor",
+    "partition": "holdout",
+    "correct_answer": "5x(x - 5)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Factor 5x^2 - 25x completely.",
+      "response": "5x(x + 5)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The second term inside the factor has the wrong sign.",
+      "observed_behaviours": "The visible response is: 5x(x + 5)",
+      "observation_status": "observed",
+      "intervention": "Divide each original term by the common factor, then expand to check.",
+      "rationale": "Division and expansion verify the sign."
+    },
+    "page_number": 8,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "turning_point-5",
+    "family": "turning_point",
+    "partition": "holdout",
+    "correct_answer": "Maximum at (5, 25)",
+    "labels": {
+      "schema_version": 1,
+      "question": "Classify the turning point of y = -(x - 5)^2 + 25.",
+      "response": "Minimum at (5, 25)",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The response labels the turning point as a minimum.",
+      "observed_behaviours": "The visible response is: Minimum at (5, 25)",
+      "observation_status": "observed",
+      "intervention": "Compare nearby y values with the turning-point value.",
+      "rationale": "The negative square makes nearby values smaller."
+    },
+    "page_number": 9,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  },
+  {
+    "key": "complete_square-5",
+    "family": "complete_square",
+    "partition": "holdout",
+    "correct_answer": "(x + 5)^2 + 3",
+    "labels": {
+      "schema_version": 1,
+      "question": "Complete the square: x^2 + 10x + 28.",
+      "response": "(x + 5)^2",
+      "marks_awarded": 1,
+      "marks_possible": 2,
+      "first_error": "The constant adjustment is missing from the written expression.",
+      "observed_behaviours": "The visible response is: (x + 5)^2",
+      "observation_status": "observed",
+      "intervention": "Expand the proposed square and compare constant terms.",
+      "rationale": "The constant difference identifies the required adjustment."
+    },
+    "page_number": 10,
+    "source_sha256": "f2ff6ac3d8fba8207201f7e87f2a3b4e762d99a74fb962f2f7ad504b60590e67"
+  }
+]
